@@ -23,7 +23,6 @@ export function AboutPage() {
       <Separator className="my-6" />
       <div className="text-muted-foreground flex max-w-prose flex-col gap-4">
         <p>{t("about.p1")}</p>
-        <p>{t("about.p2")}</p>
       </div>
     </div>
   );
