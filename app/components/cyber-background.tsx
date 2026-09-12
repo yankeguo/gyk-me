@@ -5,11 +5,16 @@ import { useEffect, useRef } from "react";
  * computed per pixel in a fragment shader. Nothing here is a dependency — the
  * whole effect is a full-screen triangle and ~60 lines of GLSL.
  *
+ * Nothing animates on its own: the camera position is a pure function of the
+ * pointer, so the grid only moves when the mouse moves. Clicks add ripples that
+ * accumulate instead of replacing each other. Frames are rendered on demand —
+ * while the pointer is easing or a ripple is alive — so an untouched page costs
+ * no GPU work at all.
+ *
  * It is decorative and client-only: prerendering emits an empty fixed element,
  * the scene is built in an effect, and everything bails out when WebGL is
- * missing. It leans toward the pointer, answers clicks with a ripple that
- * travels through the grid, and holds perfectly still for
- * `prefers-reduced-motion`.
+ * missing. Under `prefers-reduced-motion` it stays a still image and ignores
+ * both pointer and clicks.
  */
 
 const CAMERA = {
@@ -19,7 +24,6 @@ const CAMERA = {
   pitchResponse: 0.05,
   yawResponse: 0.12,
   parallax: 0.6,
-  speed: 0.55,
 };
 
 const GRID = {
@@ -29,7 +33,15 @@ const GRID = {
   falloff: 0.05,
 };
 
-const RIPPLE_LIFETIME = 2.4;
+const RIPPLE = {
+  /** How many rings can coexist; the oldest is retired when one more arrives. */
+  max: 4,
+  lifetime: 2.6,
+  speed: 3.5,
+  width: 0.9,
+  strength: 0.6,
+  fade: 1.4,
+};
 
 const PALETTE = {
   dark: { color: [0.45, 0.85, 1], alpha: 0.15 },
@@ -38,6 +50,9 @@ const PALETTE = {
 
 /** Keeps the backing store small: this is a soft background, not a picture. */
 const MAX_BACKING_WIDTH = 1600;
+
+/** Pointer easing stops once it is this close, so the loop can go idle. */
+const SETTLE_EPSILON = 0.0005;
 
 const VERTEX_SHADER = `
 attribute vec2 aPosition;
@@ -51,12 +66,11 @@ const FRAGMENT_SHADER = `
 precision mediump float;
 
 uniform vec2 uResolution;
-uniform float uTime;
 uniform vec2 uPointer;
 uniform vec3 uColor;
 uniform float uAlpha;
-uniform vec2 uRipple;
-uniform float uRippleAge;
+uniform vec2 uRipples[${RIPPLE.max}];
+uniform float uRippleAges[${RIPPLE.max}];
 
 const float camHeight = ${CAMERA.height.toFixed(4)};
 const float focal = ${CAMERA.focal.toFixed(4)};
@@ -64,11 +78,14 @@ const float pitchBase = ${CAMERA.pitch.toFixed(4)};
 const float pitchResponse = ${CAMERA.pitchResponse.toFixed(4)};
 const float yawResponse = ${CAMERA.yawResponse.toFixed(4)};
 const float parallax = ${CAMERA.parallax.toFixed(4)};
-const float speed = ${CAMERA.speed.toFixed(4)};
 const float spacing = ${GRID.spacing.toFixed(4)};
 const float fineSpacing = ${GRID.fineSpacing.toFixed(4)};
 const float fineWeight = ${GRID.fineWeight.toFixed(4)};
 const float falloff = ${GRID.falloff.toFixed(4)};
+const float rippleSpeed = ${RIPPLE.speed.toFixed(4)};
+const float rippleWidth = ${RIPPLE.width.toFixed(4)};
+const float rippleStrength = ${RIPPLE.strength.toFixed(4)};
+const float rippleFade = ${RIPPLE.fade.toFixed(4)};
 
 vec3 rayDirection(vec2 uv, float yaw, float pitch) {
   vec3 dir = normalize(vec3(uv.x, uv.y - pitch, -focal));
@@ -87,7 +104,7 @@ void main() {
 
   float yaw = uPointer.x * yawResponse;
   float pitch = pitchBase - uPointer.y * pitchResponse;
-  vec3 origin = vec3(uPointer.x * parallax, camHeight, -uTime * speed);
+  vec3 origin = vec3(uPointer.x * parallax, camHeight, 0.0);
   vec3 direction = rayDirection(uv, yaw, pitch);
 
   // Only the ground plane below the camera is drawn; the rest stays clear.
@@ -103,13 +120,16 @@ void main() {
   float footprint = max(travelled * 2.0 / (uResolution.y * abs(direction.y)), 0.0015);
   float coarse = gridMask(hit.xz, spacing, footprint);
   float fine = gridMask(hit.xz, fineSpacing, footprint * 0.8) * fineWeight;
-  float travel = 0.8 + 0.2 * sin(hit.z * 0.5 + uTime * 1.6);
 
-  float glow = (coarse + fine) * travel * exp(-travelled * falloff);
+  float glow = (coarse + fine) * exp(-travelled * falloff);
 
-  if (uRippleAge >= 0.0) {
-    float ahead = (distance(hit.xz, uRipple) - uRippleAge * 3.5) * 0.9;
-    glow += exp(-ahead * ahead) * exp(-uRippleAge * 1.4) * 0.6;
+  // Every live ripple keeps expanding, so old clicks stay visible.
+  for (int i = 0; i < ${RIPPLE.max}; i++) {
+    float age = uRippleAges[i];
+    if (age >= 0.0) {
+      float ahead = (distance(hit.xz, uRipples[i]) - age * rippleSpeed) * rippleWidth;
+      glow += exp(-ahead * ahead) * exp(-age * rippleFade) * rippleStrength;
+    }
   }
 
   float alpha = clamp(glow, 0.0, 1.0) * uAlpha;
@@ -154,6 +174,8 @@ function createProgram(gl: WebGLRenderingContext) {
   return program;
 }
 
+type Ripple = { x: number; z: number; start: number };
+
 export function CyberBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -187,12 +209,11 @@ export function CyberBackground() {
 
     const uniforms = {
       resolution: gl.getUniformLocation(program, "uResolution"),
-      time: gl.getUniformLocation(program, "uTime"),
       pointer: gl.getUniformLocation(program, "uPointer"),
       color: gl.getUniformLocation(program, "uColor"),
       alpha: gl.getUniformLocation(program, "uAlpha"),
-      ripple: gl.getUniformLocation(program, "uRipple"),
-      rippleAge: gl.getUniformLocation(program, "uRippleAge"),
+      ripples: gl.getUniformLocation(program, "uRipples"),
+      rippleAges: gl.getUniformLocation(program, "uRippleAges"),
     };
 
     // oxlint-disable-next-line react-hooks/rules-of-hooks -- WebGL's useProgram, not a hook
@@ -203,19 +224,23 @@ export function CyberBackground() {
 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
-    const ripple = { x: 0, z: 0, start: Number.NEGATIVE_INFINITY };
-    let elapsed = 0;
+    const ripples: Ripple[] = [];
+    const rippleOrigins = new Float32Array(RIPPLE.max * 2);
+    const rippleAges = new Float32Array(RIPPLE.max);
     let frame = 0;
     let previous = 0;
     let palette = PALETTE.light;
 
-    const draw = () => {
-      const age = elapsed - ripple.start;
-      const active = age >= 0 && age < RIPPLE_LIFETIME;
+    const draw = (now: number) => {
+      for (let i = 0; i < RIPPLE.max; i++) {
+        const ripple = ripples[i];
+        rippleOrigins[i * 2] = ripple?.x ?? 0;
+        rippleOrigins[i * 2 + 1] = ripple?.z ?? 0;
+        rippleAges[i] = ripple ? (now - ripple.start) / 1000 : -1;
+      }
 
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
-      gl.uniform1f(uniforms.time, elapsed);
       gl.uniform2f(uniforms.pointer, pointer.x, pointer.y);
       gl.uniform3f(
         uniforms.color,
@@ -224,25 +249,44 @@ export function CyberBackground() {
         palette.color[2],
       );
       gl.uniform1f(uniforms.alpha, palette.alpha);
-      gl.uniform2f(uniforms.ripple, ripple.x, ripple.z);
-      gl.uniform1f(uniforms.rippleAge, active ? age : -1);
+      gl.uniform2fv(uniforms.ripples, rippleOrigins);
+      gl.uniform1fv(uniforms.rippleAges, rippleAges);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
 
+    const isSettled = () =>
+      pointer.x === pointer.targetX && pointer.y === pointer.targetY;
+
+    const keepGoing = (now: number) => {
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        if ((now - ripples[i].start) / 1000 > RIPPLE.lifetime) {
+          ripples.splice(i, 1);
+        }
+      }
+      return ripples.length > 0 || !isSettled();
+    };
+
     const render = (now: number) => {
+      frame = 0;
       const delta = Math.min((now - previous) / 1000, 0.05);
       previous = now;
-      elapsed += delta;
 
       const ease = Math.min(1, delta * 4);
       pointer.x += (pointer.targetX - pointer.x) * ease;
       pointer.y += (pointer.targetY - pointer.y) * ease;
+      if (Math.abs(pointer.targetX - pointer.x) < SETTLE_EPSILON) {
+        pointer.x = pointer.targetX;
+      }
+      if (Math.abs(pointer.targetY - pointer.y) < SETTLE_EPSILON) {
+        pointer.y = pointer.targetY;
+      }
 
-      draw();
-      frame = requestAnimationFrame(render);
+      draw(now);
+      if (keepGoing(now)) frame = requestAnimationFrame(render);
     };
 
-    const start = () => {
+    /** Renders only while something is actually changing. */
+    const requestFrame = () => {
       if (frame || motion.matches || document.hidden) return;
       previous = performance.now();
       frame = requestAnimationFrame(render);
@@ -264,7 +308,7 @@ export function CyberBackground() {
       canvas.width = Math.max(1, Math.round(width * ratio));
       canvas.height = Math.max(1, Math.round(height * ratio));
       gl.viewport(0, 0, canvas.width, canvas.height);
-      draw();
+      draw(performance.now());
     };
 
     /** World-space point where a screen position meets the grid plane. */
@@ -280,37 +324,39 @@ export function CyberBackground() {
       const x = uvx / scale;
       const y = (uvy - pitch) / scale;
       const z = -CAMERA.focal / scale;
+      if (y >= -0.002) return null;
 
       const cos = Math.cos(yaw);
       const sin = Math.sin(yaw);
       const dx = cos * x + sin * z;
       const dz = -sin * x + cos * z;
-      if (y >= -0.002) return null;
-
-      const distance = -CAMERA.height / y;
+      const travelled = -CAMERA.height / y;
       return {
-        x: pointer.x * CAMERA.parallax + dx * distance,
-        z: -elapsed * CAMERA.speed + dz * distance,
+        x: pointer.x * CAMERA.parallax + dx * travelled,
+        z: dz * travelled,
       };
     };
 
     const onPointerMove = (event: PointerEvent) => {
       pointer.targetX = (event.clientX / window.innerWidth) * 2 - 1;
       pointer.targetY = 1 - (event.clientY / window.innerHeight) * 2;
+      requestFrame();
     };
 
     const onPointerDown = (event: PointerEvent) => {
+      if (motion.matches) return;
       const point = groundPoint(event.clientX, event.clientY);
       if (!point) return;
-      ripple.x = point.x;
-      ripple.z = point.z;
-      ripple.start = elapsed;
-      if (motion.matches) draw();
+
+      ripples.push({ x: point.x, z: point.z, start: performance.now() });
+      // Old rings keep going; only the oldest gives way when at capacity.
+      while (ripples.length > RIPPLE.max) ripples.shift();
+      requestFrame();
     };
 
     const onVisibilityChange = () => {
       if (document.hidden) stop();
-      else start();
+      else requestFrame();
     };
 
     const onMotionChange = () => {
@@ -318,19 +364,17 @@ export function CyberBackground() {
         stop();
         pointer.x = pointer.targetX;
         pointer.y = pointer.targetY;
-        draw();
-      } else {
-        start();
+        ripples.length = 0;
+        draw(performance.now());
       }
     };
 
-    // Repaint the static frame whenever the theme flips, and keep the running
-    // scene in sync with the palette.
+    // Repaint whenever the theme flips so the static frame matches the palette.
     const syncPalette = () => {
       palette = document.documentElement.classList.contains("dark")
         ? PALETTE.dark
         : PALETTE.light;
-      if (!frame) draw();
+      draw(performance.now());
     };
 
     const observer = new MutationObserver(syncPalette);
@@ -348,8 +392,6 @@ export function CyberBackground() {
     motion.addEventListener("change", onMotionChange);
     document.addEventListener("visibilitychange", onVisibilityChange);
     canvas.addEventListener("webglcontextlost", stop);
-
-    start();
 
     return () => {
       stop();
