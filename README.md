@@ -130,13 +130,20 @@ Design constraints it holds to:
 - **Low contrast.** Lines peak at ~12–15% alpha and fade with distance, so
   content stays dominant. The palette follows the theme: faint slate on white,
   faint cyan on near-black.
-- **Never scrolls.** The wrapper is `position: fixed`; only the shader clock
-  moves.
-- **Interactive.** The camera leans toward the pointer, and a click sends a
-  ripple travelling outward through the grid. Screen positions are unprojected
-  in JS so a ripple stays anchored to the world while the grid scrolls past it.
-- **Quiet when asked.** `prefers-reduced-motion` renders a single static frame
-  and stops the loop; rendering also pauses while the tab is hidden.
+- **Never scrolls, never drifts.** The wrapper is `position: fixed`, and nothing
+  moves on its own: the camera is a pure function of the pointer, so a still
+  mouse means a still page. There is no time uniform in the shader at all.
+- **Idle costs nothing.** No render loop runs by default. Frames are drawn on
+  demand — while the pointer is easing toward its target, or while a ripple is
+  alive — and the loop stops itself once everything has settled.
+- **Interactive.** The camera leans toward the pointer, and a click drops a
+  ripple that expands outward through the grid. Up to four coexist and a new
+  click never cancels an older ring; only the oldest retires when one more
+  arrives. Screen positions are unprojected in JS, so each ripple stays anchored
+  to the world plane rather than to the viewport.
+- **Quiet when asked.** `prefers-reduced-motion` freezes it to a single still
+  frame and ignores both pointer and clicks; rendering also pauses while the tab
+  is hidden.
 - **Fail-soft.** No WebGL, no backdrop — never an error. Prerendering emits an
   empty element, since the scene is built in an effect on the client only.
 - **Bounded cost.** The backing store is capped at 1600px wide and 1.5 DPR, so
