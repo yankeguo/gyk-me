@@ -1,8 +1,8 @@
 # gyk.me
 
 Static site for [gyk.me](https://gyk.me) — prerendered with React Router, styled
-with shadcn/ui and Tailwind CSS, bilingual (English / 中文), built and deployed
-to GitHub Pages.
+with shadcn/ui and Tailwind CSS, bilingual (English / 中文), with an interactive
+WebGL backdrop, built and deployed to GitHub Pages.
 
 ## Stack
 
@@ -11,6 +11,7 @@ to GitHub Pages.
 | UI             | React 19                                                    |
 | Framework      | React Router 8 (framework mode, `ssr: false` + `prerender`) |
 | Styling        | Tailwind CSS v4 + shadcn/ui (Base UI primitives)            |
+| Backdrop       | Hand-written WebGL fragment shader (no 3D library)          |
 | Bundler        | Vite 8 (React Router's build pipeline)                      |
 | Package runner | Bun (install, scripts, lockfile)                            |
 | Lint / format  | oxlint / oxfmt                                              |
@@ -45,10 +46,8 @@ at build time — in both locales:
 ```
 build/
 ├── client/                       # deploy this directory
-│   ├── index.html                # prerendered "/"        (en)
-│   ├── about/index.html          # prerendered "/about"   (en)
-│   ├── zh/index.html             # prerendered "/zh"      (zh)
-│   ├── zh/about/index.html       # prerendered "/zh/about" (zh)
+│   ├── index.html                # prerendered "/"   (en)
+│   ├── zh/index.html             # prerendered "/zh"  (zh)
 │   ├── 404.html                  # SPA fallback, written by scripts/postbuild.ts
 │   └── assets/                   # hashed JS/CSS/fonts
 └── server/                       # build-time render bundle (not deployed)
@@ -118,13 +117,38 @@ Light and dark tokens live in `app/app.css` (`:root` and `.dark`). The choice is
 `<html lang>`, `canonical`, and `hreflang` all come from the root layout, so new
 routes inherit them automatically.
 
+## Backdrop
+
+`app/components/cyber-background.tsx` renders a perspective grid behind
+everything: a fixed, `pointer-events-none` canvas painted by a full-screen
+triangle and a fragment shader that intersects a ray per pixel with the ground
+plane. No 3D library and no dependency — the geometry, the anti-aliasing, and
+the falloff are all in the shader.
+
+Design constraints it holds to:
+
+- **Low contrast.** Lines peak at ~12–15% alpha and fade with distance, so
+  content stays dominant. The palette follows the theme: faint slate on white,
+  faint cyan on near-black.
+- **Never scrolls.** The wrapper is `position: fixed`; only the shader clock
+  moves.
+- **Interactive.** The camera leans toward the pointer, and a click sends a
+  ripple travelling outward through the grid. Screen positions are unprojected
+  in JS so a ripple stays anchored to the world while the grid scrolls past it.
+- **Quiet when asked.** `prefers-reduced-motion` renders a single static frame
+  and stops the loop; rendering also pauses while the tab is hidden.
+- **Fail-soft.** No WebGL, no backdrop — never an error. Prerendering emits an
+  empty element, since the scene is built in an effect on the client only.
+- **Bounded cost.** The backing store is capped at 1600px wide and 1.5 DPR, so
+  the shader never runs at full retina resolution.
+
 ## Components
 
 shadcn/ui components live in `app/components/ui` and are owned by this repo —
 edit them freely. Add more with:
 
 ```bash
-bunx shadcn@latest add dialog dropdown-menu
+bunx shadcn@latest add dialog separator
 ```
 
 ## Deployment
