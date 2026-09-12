@@ -78,8 +78,6 @@ export function HydrateFallback() {
 }
 
 export default function App() {
-  const t = useTranslate();
-
   return (
     <div className="flex min-h-svh flex-col">
       <SiteHeader />
@@ -87,9 +85,8 @@ export default function App() {
         <Outlet />
       </main>
       <footer className="border-t">
-        <div className="text-muted-foreground mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-6 text-sm">
-          <span>gyk.me</span>
-          <span>{t("footer.note")}</span>
+        <div className="text-muted-foreground mx-auto max-w-3xl px-4 py-6 text-sm">
+          gyk.me
         </div>
       </footer>
     </div>
