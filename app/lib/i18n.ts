@@ -68,19 +68,10 @@ export function canonicalPath(pathname: string): string {
 
 const en = {
   "site.name": "Y.-K. Guo",
-  "nav.home": "Home",
-  "nav.about": "About",
   "home.intro":
     "Welcome to gyk.me — a small corner of the internet for my projects, notes, and experiments.",
-  "home.cta.about": "About me",
-  "home.cta.github": "GitHub",
-  "about.title": "About",
-  "about.p1":
-    "I build software — mostly backend services, developer tooling, and the occasional web front end. This site collects what I want to keep around.",
   "meta.home.title": "Y.-K. Guo",
   "meta.home.description": "Y.-K. Guo — projects, notes, and experiments.",
-  "meta.about.title": "About · Y.-K. Guo",
-  "meta.about.description": "About Y.-K. Guo.",
   "theme.label": "Theme",
   "theme.light": "Light",
   "theme.dark": "Dark",
@@ -99,18 +90,9 @@ export type MessageKey = keyof typeof en;
 
 const zh: Record<MessageKey, string> = {
   "site.name": "Y.-K. Guo",
-  "nav.home": "首页",
-  "nav.about": "关于",
   "home.intro": "欢迎来到 gyk.me —— 这里放我的项目、笔记和一些尝试。",
-  "home.cta.about": "关于我",
-  "home.cta.github": "GitHub",
-  "about.title": "关于",
-  "about.p1":
-    "我写软件，主要是后端服务与开发者工具，偶尔也写前端。这个站点用来存放我想留下来的东西。",
   "meta.home.title": "Y.-K. Guo",
   "meta.home.description": "Y.-K. Guo 的个人站点 —— 项目、笔记与一些尝试。",
-  "meta.about.title": "关于 · Y.-K. Guo",
-  "meta.about.description": "关于 Y.-K. Guo。",
   "theme.label": "主题",
   "theme.light": "亮色",
   "theme.dark": "深色",

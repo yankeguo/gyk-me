@@ -9,6 +9,8 @@ import {
   useLocation,
 } from "react-router";
 
+import { CyberBackground } from "~/components/cyber-background";
+import { SiteFooter } from "~/components/site-footer";
 import { SiteHeader } from "~/components/site-header";
 import { buttonVariants } from "~/components/ui/button";
 import {
@@ -80,15 +82,12 @@ export function HydrateFallback() {
 export default function App() {
   return (
     <div className="flex min-h-svh flex-col">
+      <CyberBackground />
       <SiteHeader />
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t">
-        <div className="text-muted-foreground mx-auto max-w-3xl px-4 py-6 text-sm">
-          gyk.me
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
