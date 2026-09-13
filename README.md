@@ -117,6 +117,25 @@ Light and dark tokens live in `app/app.css` (`:root` and `.dark`). The choice is
 `<html lang>`, `canonical`, and `hreflang` all come from the root layout, so new
 routes inherit them automatically.
 
+## Icons
+
+`public/` holds three generated files, all declaring the same mark: "YK" set in
+Geist Bold — the heading face the site already loads — on a rounded tile, in the
+`--foreground` / `--background` pair from `app/app.css`.
+
+- `favicon.svg` is the one that counts where it is supported. It carries a
+  `prefers-color-scheme: dark` rule that swaps tile and mark, so the icon inverts
+  with the OS rather than the site's own stored theme.
+- `favicon.ico` (16/32/48) is the fallback for browsers without SVG icons, and is
+  fixed to the light-mode artwork.
+- `apple-touch-icon.png` (180) is full bleed and opaque, since iOS applies its
+  own mask; the glyph is inset a little further to survive it.
+
+They are committed binaries rather than build artifacts, and the shapes are the
+real glyph outlines instead of a traced approximation: regenerating them means
+converting Geist to SVG paths (Google Fonts' static Geist 700). No generator
+script is checked in yet.
+
 ## Backdrop
 
 `app/components/cyber-background.tsx` renders a perspective grid behind
