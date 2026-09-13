@@ -30,6 +30,10 @@ const GRID = {
   spacing: 1,
   fineSpacing: 0.2,
   fineWeight: 0.35,
+  /** Line thickness, as a multiple of one pixel's footprint on the plane. */
+  lineWidth: 0.85,
+  /** Fine lines are drawn thinner still. */
+  fineWidth: 0.7,
   falloff: 0.05,
 };
 
@@ -43,9 +47,14 @@ const RIPPLE = {
   fade: 1.4,
 };
 
+/**
+ * Thin lines carry more alpha than wide ones did, so the grid reads as crisper
+ * and deeper rather than brighter: a saturated cyan on near-black, and a deep
+ * slate blue on white.
+ */
 const PALETTE = {
-  dark: { color: [0.45, 0.85, 1], alpha: 0.15 },
-  light: { color: [0.12, 0.32, 0.48], alpha: 0.12 },
+  dark: { color: [0.16, 0.7, 0.92], alpha: 0.24 },
+  light: { color: [0.05, 0.18, 0.3], alpha: 0.26 },
 };
 
 /** Keeps the backing store small: this is a soft background, not a picture. */
@@ -81,6 +90,8 @@ const float parallax = ${CAMERA.parallax.toFixed(4)};
 const float spacing = ${GRID.spacing.toFixed(4)};
 const float fineSpacing = ${GRID.fineSpacing.toFixed(4)};
 const float fineWeight = ${GRID.fineWeight.toFixed(4)};
+const float lineWidth = ${GRID.lineWidth.toFixed(4)};
+const float fineWidth = ${GRID.fineWidth.toFixed(4)};
 const float falloff = ${GRID.falloff.toFixed(4)};
 const float rippleSpeed = ${RIPPLE.speed.toFixed(4)};
 const float rippleWidth = ${RIPPLE.width.toFixed(4)};
@@ -118,8 +129,8 @@ void main() {
 
   // One pixel's footprint on the plane, so lines stay a pixel wide at any depth.
   float footprint = max(travelled * 2.0 / (uResolution.y * abs(direction.y)), 0.0015);
-  float coarse = gridMask(hit.xz, spacing, footprint);
-  float fine = gridMask(hit.xz, fineSpacing, footprint * 0.8) * fineWeight;
+  float coarse = gridMask(hit.xz, spacing, footprint * lineWidth);
+  float fine = gridMask(hit.xz, fineSpacing, footprint * lineWidth * fineWidth) * fineWeight;
 
   float glow = (coarse + fine) * exp(-travelled * falloff);
 
