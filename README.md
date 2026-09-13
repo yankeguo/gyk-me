@@ -146,9 +146,12 @@ the falloff are all in the shader.
 
 Design constraints it holds to:
 
-- **Low contrast.** Lines peak at ~12–15% alpha and fade with distance, so
-  content stays dominant. The palette follows the theme: faint slate on white,
-  faint cyan on near-black.
+- **Hairline but deep.** Lines are about one pixel wide — the anti-aliasing
+  width comes from each pixel's own footprint on the plane — so they stay crisp
+  at any depth. Because they cover so few pixels the ink itself is deep: a
+  saturated cyan on near-black, a deep slate blue on white. Weight and colour
+  live in `GRID.lineWidth` and `PALETTE`, and both fade with distance so content
+  stays dominant.
 - **Never scrolls, never drifts.** The wrapper is `position: fixed`, and nothing
   moves on its own: the camera is a pure function of the pointer, so a still
   mouse means a still page. There is no time uniform in the shader at all.
