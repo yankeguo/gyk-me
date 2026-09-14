@@ -1,7 +1,8 @@
 import { type MetaArgs } from "react-router";
+import { Link } from "react-router";
 
-import { localeFromPathname, translator } from "~/lib/i18n";
-import { useTranslate } from "~/lib/use-i18n";
+import { localeFromPathname, localizePath, translator } from "~/lib/i18n";
+import { useLocale, useTranslate } from "~/lib/use-i18n";
 
 export function homeMeta({ location }: MetaArgs) {
   const t = translator(localeFromPathname(location.pathname));
@@ -12,6 +13,7 @@ export function homeMeta({ location }: MetaArgs) {
 }
 
 export function HomePage() {
+  const locale = useLocale();
   const t = useTranslate();
 
   return (
@@ -21,6 +23,12 @@ export function HomePage() {
           {t("site.name")}
         </h1>
         <p className="text-muted-foreground max-w-prose">{t("home.intro")}</p>
+        <Link
+          to={localizePath("/posts", locale)}
+          className="text-muted-foreground hover:text-foreground font-heading text-sm transition-colors"
+        >
+          {t("home.posts")} →
+        </Link>
       </section>
     </div>
   );

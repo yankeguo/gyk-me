@@ -46,8 +46,10 @@ at build time — in both locales:
 ```
 build/
 ├── client/                       # deploy this directory
-│   ├── index.html                # prerendered "/"   (en)
-│   ├── zh/index.html             # prerendered "/zh"  (zh)
+│   ├── index.html                # prerendered "/"                 (en)
+│   ├── posts/index.html          # prerendered "/posts"            (en)
+│   ├── posts/weft/index.html     # prerendered "/posts/weft"       (en)
+│   ├── zh/…                      # the same three, in Chinese
 │   ├── 404.html                  # SPA fallback, written by scripts/postbuild.ts
 │   └── assets/                   # hashed JS/CSS/fonts
 └── server/                       # build-time render bundle (not deployed)
@@ -64,11 +66,11 @@ Adding a page means adding a route module and an entry in `app/routes.ts`:
 export default [
   index("routes/home.tsx"),
   route("about", "routes/about.tsx"),
-  route("posts/:slug", "routes/post.tsx"),
 ] satisfies RouteConfig;
 ```
 
-Routes with dynamic params need their paths listed in `prerender`:
+Routes with dynamic params need their paths listed in `prerender`; the posts
+below avoid that by being static:
 
 ```ts
 // react-router.config.ts
@@ -80,6 +82,28 @@ export default {
   },
 } satisfies Config;
 ```
+
+## Posts
+
+The site's one parameterized-looking route is deliberately not parameterized.
+`app/routes.ts` declares each post as a static path — `posts/weft`, and its
+`zh` mirror — because only static routes are prerendered, and an article that
+exists only after the client router boots is not worth writing. A new post
+means one entry per locale in `app/routes.ts`, one one-line route module per
+locale, and its content:
+
+```
+app/content/posts.ts     # the registry: slug, date, per-locale title/summary
+app/content/<slug>.tsx   # the prose itself, as a per-locale component
+app/pages/post.tsx       # PostArticle — the shared article shell
+app/pages/post-<slug>.tsx# meta for that post, plus its page component
+```
+
+The bodies are React rather than Markdown so prose lives in the typed graph:
+a missing locale or a broken component fails `tsc` and the build, and prose
+styling is one `.post` block in `app/app.css` rather than a Markdown pipeline.
+That block is written by hand instead of pulling in a typography plugin,
+because this site is one font and a handful of elements.
 
 ## Languages
 

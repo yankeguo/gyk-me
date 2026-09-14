@@ -1,6 +1,12 @@
+import { Link } from "react-router";
+
+import { localizePath } from "~/lib/i18n";
+import { useLocale, useTranslate } from "~/lib/use-i18n";
+
 /**
  * The GitHub link lives here on purpose: a quiet icon at the edge of the
- * footer, not a call to action competing with the page.
+ * footer, not a call to action competing with the page. The posts link is text,
+ * because it goes somewhere inside this site.
  */
 function GithubMark({ className }: { className?: string }) {
   return (
@@ -16,20 +22,31 @@ function GithubMark({ className }: { className?: string }) {
 }
 
 export function SiteFooter() {
+  const locale = useLocale();
+  const t = useTranslate();
+
   return (
     <footer className="border-t">
       <div className="text-muted-foreground mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-6 text-sm">
         <span>gyk.me</span>
-        <a
-          href="https://github.com/yankeguo"
-          target="_blank"
-          rel="noreferrer"
-          aria-label="GitHub"
-          title="GitHub"
-          className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring/50 -mr-1 rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none"
-        >
-          <GithubMark className="size-4" />
-        </a>
+        <div className="flex items-center gap-3">
+          <Link
+            to={localizePath("/posts", locale)}
+            className="hover:text-foreground transition-colors"
+          >
+            {t("nav.posts")}
+          </Link>
+          <a
+            href="https://github.com/yankeguo"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="GitHub"
+            title="GitHub"
+            className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring/50 -mr-1 rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          >
+            <GithubMark className="size-4" />
+          </a>
+        </div>
       </div>
     </footer>
   );
