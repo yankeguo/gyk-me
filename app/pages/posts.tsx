@@ -13,7 +13,7 @@ export function postListMeta({ location }: MetaArgs) {
     {
       name: "description",
       content: zh
-        ? `关于我做了什么、以及为什么,写得长一点的那些。目前 ${posts.length} 篇。`
+        ? `关于我做了什么、以及为什么，写得长一点的那些。目前 ${posts.length} 篇。`
         : `Notes on what I build and why — ${posts.length} of them.`,
     },
   ];

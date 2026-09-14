@@ -111,7 +111,7 @@ const zh: Record<MessageKey, string> = {
   "lang.switch": "切换到英文",
   "nav.posts": "文章",
   "posts.title": "文章",
-  "posts.intro": "关于我做了什么、以及为什么,写得长一点的那些。",
+  "posts.intro": "关于我做了什么、以及为什么，写得长一点的那些。",
   "posts.empty": "还没有发布任何文章。",
   "post.back": "全部文章",
   loading: "加载中…",
