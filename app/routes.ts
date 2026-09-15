@@ -19,9 +19,11 @@ export default [
   index("routes/home.tsx"),
   route("posts", "routes/posts.tsx"),
   route("posts/weft", "routes/post.weft.tsx"),
+  route("posts/sensor-actuator", "routes/post.sensor-actuator.tsx"),
   ...prefix("zh", [
     index("routes/zh/home.tsx"),
     route("posts", "routes/zh/posts.tsx"),
     route("posts/weft", "routes/zh/post.weft.tsx"),
+    route("posts/sensor-actuator", "routes/zh/post.sensor-actuator.tsx"),
   ]),
 ] satisfies RouteConfig;
