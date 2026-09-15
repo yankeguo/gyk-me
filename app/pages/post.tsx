@@ -70,3 +70,15 @@ export function PostBackLink() {
     </Link>
   );
 }
+
+/**
+ * Where a post's factual claims can be checked. Sits under the back link,
+ * quieter than the prose, because it is a footnote and not an argument.
+ */
+export function PostSources({ children }: { children: ReactNode }) {
+  return (
+    <p className="text-muted-foreground mt-4 text-xs leading-relaxed">
+      {children}
+    </p>
+  );
+}
