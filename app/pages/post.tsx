@@ -63,7 +63,7 @@ export function PostBackLink() {
 
   return (
     <Link
-      to={localizePath("/posts", locale)}
+      to={localizePath("/", locale)}
       className="text-muted-foreground hover:text-foreground text-sm transition-colors"
     >
       ← {t("post.back")}
