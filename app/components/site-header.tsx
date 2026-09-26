@@ -10,7 +10,7 @@ export function SiteHeader() {
   const t = useTranslate();
 
   return (
-    <header className="border-t-primary border-t border-b">
+    <header className="border-b">
       <div className="mx-auto flex h-12 max-w-3xl items-center justify-between gap-2 px-4">
         <Link
           to={localizePath("/", locale)}

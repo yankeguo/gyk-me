@@ -67,7 +67,7 @@ export function HomePage() {
       ) : (
         <ul>
           {posts.map((post) => (
-            <li key={post.slug} className="flex flex-col gap-2 border-b py-6">
+            <li key={post.slug} className="flex flex-col gap-2 py-6">
               <time
                 dateTime={post.date}
                 className="text-muted-foreground font-mono text-xs tracking-wide tabular-nums"
