@@ -71,9 +71,6 @@ export function canonicalPath(pathname: string): string {
 
 const en = {
   "site.name": "Y.-K. Guo",
-  "home.intro":
-    "Welcome to gyk.me — a small corner of the internet for my projects, notes, and experiments.",
-  "home.posts": "Read the posts",
   "meta.home.title": "Y.-K. Guo",
   "meta.home.description": "Y.-K. Guo — projects, notes, and experiments.",
   "theme.label": "Theme",
@@ -82,9 +79,6 @@ const en = {
   "theme.system": "System",
   "lang.label": "中文",
   "lang.switch": "Switch to Chinese",
-  "nav.posts": "Posts",
-  "posts.title": "Posts",
-  "posts.intro": "Longer notes on what I build and why.",
   "posts.empty": "Nothing published yet.",
   "post.back": "All posts",
   loading: "Loading…",
@@ -99,8 +93,6 @@ export type MessageKey = keyof typeof en;
 
 const zh: Record<MessageKey, string> = {
   "site.name": "Y.-K. Guo",
-  "home.intro": "欢迎来到 gyk.me —— 这里放我的项目、笔记和一些尝试。",
-  "home.posts": "阅读文章",
   "meta.home.title": "Y.-K. Guo",
   "meta.home.description": "Y.-K. Guo 的个人站点 —— 项目、笔记与一些尝试。",
   "theme.label": "主题",
@@ -109,9 +101,6 @@ const zh: Record<MessageKey, string> = {
   "theme.system": "跟随系统",
   "lang.label": "English",
   "lang.switch": "切换到英文",
-  "nav.posts": "文章",
-  "posts.title": "文章",
-  "posts.intro": "关于我做了什么、以及为什么，写得长一点的那些。",
   "posts.empty": "还没有发布任何文章。",
   "post.back": "全部文章",
   loading: "加载中…",
