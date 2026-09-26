@@ -1,8 +1,8 @@
 # gyk.me
 
 Static site for [gyk.me](https://gyk.me) — prerendered with React Router, styled
-with shadcn/ui and Tailwind CSS, bilingual (English / 中文), with an interactive
-WebGL backdrop, built and deployed to GitHub Pages.
+with shadcn/ui and Tailwind CSS, bilingual (English / 中文), built and deployed
+to GitHub Pages.
 
 ## Stack
 
@@ -11,7 +11,6 @@ WebGL backdrop, built and deployed to GitHub Pages.
 | UI             | React 19                                                    |
 | Framework      | React Router 8 (framework mode, `ssr: false` + `prerender`) |
 | Styling        | Tailwind CSS v4 + shadcn/ui (Base UI primitives)            |
-| Backdrop       | Hand-written WebGL fragment shader (no 3D library)          |
 | Bundler        | Vite 8 (React Router's build pipeline)                      |
 | Package runner | Bun (install, scripts, lockfile)                            |
 | Lint / format  | oxlint / oxfmt                                              |
@@ -183,41 +182,6 @@ They are committed binaries rather than build artifacts, and the shapes are the
 real glyph outlines instead of a traced approximation: regenerating them means
 converting Geist to SVG paths (Google Fonts' static Geist 700). No generator
 script is checked in yet.
-
-## Backdrop
-
-`app/components/cyber-background.tsx` renders a perspective grid behind
-everything: a fixed, `pointer-events-none` canvas painted by a full-screen
-triangle and a fragment shader that intersects a ray per pixel with the ground
-plane. No 3D library and no dependency — the geometry, the anti-aliasing, and
-the falloff are all in the shader.
-
-Design constraints it holds to:
-
-- **Hairline but deep.** Lines are about one pixel wide — the anti-aliasing
-  width comes from each pixel's own footprint on the plane — so they stay crisp
-  at any depth. Because they cover so few pixels the ink itself is deep: a
-  saturated cyan on near-black, a deep slate blue on white. Weight and colour
-  live in `GRID.lineWidth` and `PALETTE`, and both fade with distance so content
-  stays dominant.
-- **Never scrolls, never drifts.** The wrapper is `position: fixed`, and nothing
-  moves on its own: the camera is a pure function of the pointer, so a still
-  mouse means a still page. There is no time uniform in the shader at all.
-- **Idle costs nothing.** No render loop runs by default. Frames are drawn on
-  demand — while the pointer is easing toward its target, or while a ripple is
-  alive — and the loop stops itself once everything has settled.
-- **Interactive.** The camera leans toward the pointer, and a click drops a
-  ripple that expands outward through the grid. Up to four coexist and a new
-  click never cancels an older ring; only the oldest retires when one more
-  arrives. Screen positions are unprojected in JS, so each ripple stays anchored
-  to the world plane rather than to the viewport.
-- **Quiet when asked.** `prefers-reduced-motion` freezes it to a single still
-  frame and ignores both pointer and clicks; rendering also pauses while the tab
-  is hidden.
-- **Fail-soft.** No WebGL, no backdrop — never an error. Prerendering emits an
-  empty element, since the scene is built in an effect on the client only.
-- **Bounded cost.** The backing store is capped at 1600px wide and 1.5 DPR, so
-  the shader never runs at full retina resolution.
 
 ## Components
 
