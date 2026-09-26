@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Fixed, low-contrast WebGL backdrop: a neon grid receding into the distance,
- * computed per pixel in a fragment shader. Nothing here is a dependency — the
- * whole effect is a full-screen triangle and ~60 lines of GLSL.
+ * Fixed, low-contrast WebGL backdrop: a hairline grid receding into the
+ * distance, computed per pixel in a fragment shader. Nothing here is a
+ * dependency — the whole effect is a full-screen triangle and ~60 lines of GLSL.
  *
  * Nothing animates on its own: the camera position is a pure function of the
  * pointer, so the grid only moves when the mouse moves. Clicks add ripples that
@@ -48,13 +48,13 @@ const RIPPLE = {
 };
 
 /**
- * Thin lines carry more alpha than wide ones did, so the grid reads as crisper
- * and deeper rather than brighter: a saturated cyan on near-black, and a deep
- * slate blue on white.
+ * Thin lines stay a whisper of the page: oxidized copper on warm paper, and a
+ * duller amber on warm charcoal. Bright enough to read as a ruled ground,
+ * quiet enough to stay behind the type.
  */
 const PALETTE = {
-  dark: { color: [0.16, 0.7, 0.92], alpha: 0.24 },
-  light: { color: [0.05, 0.18, 0.3], alpha: 0.26 },
+  dark: { color: [0.72, 0.5, 0.3], alpha: 0.14 },
+  light: { color: [0.45, 0.28, 0.16], alpha: 0.16 },
 };
 
 /** Keeps the backing store small: this is a soft background, not a picture. */

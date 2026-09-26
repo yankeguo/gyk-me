@@ -18,8 +18,8 @@ function GithubMark({ className }: { className?: string }) {
 export function SiteFooter() {
   return (
     <footer className="border-t">
-      <div className="text-muted-foreground mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-6 text-sm">
-        <span>gyk.me</span>
+      <div className="text-muted-foreground mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-6">
+        <span className="font-mono text-xs tracking-wide">gyk.me</span>
         <a
           href="https://github.com/yankeguo"
           target="_blank"

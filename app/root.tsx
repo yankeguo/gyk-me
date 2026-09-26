@@ -91,7 +91,7 @@ export function HydrateFallback() {
 
 export default function App() {
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="isolate flex min-h-svh flex-col">
       <CyberBackground />
       <SiteHeader />
       <main className="flex-1">
@@ -129,7 +129,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         {t("error.back")}
       </Link>
       {stack ? (
-        <pre className="w-full overflow-x-auto rounded-lg border p-4 text-xs">
+        <pre className="w-full overflow-x-auto rounded-sm border p-4 text-xs">
           <code>{stack}</code>
         </pre>
       ) : null}
