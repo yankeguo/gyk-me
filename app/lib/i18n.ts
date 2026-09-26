@@ -25,6 +25,8 @@ export const siteUrl = "https://gyk.me";
 /** Used in `<title>`; the catalogues also carry it as `site.name`. */
 export const siteName = "Y.-K. Guo";
 
+export const siteEmail = "hi@gyk.me";
+
 function hasLocalePrefix(pathname: string, locale: Locale): boolean {
   const prefix = localePrefixes[locale];
   if (prefix === undefined) return false;
