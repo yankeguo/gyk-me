@@ -35,8 +35,8 @@ export function HomePage() {
   const t = useTranslate();
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col px-4 py-16">
-      <div className="flex items-center gap-5 border-b pb-8">
+    <div className="mx-auto flex max-w-3xl flex-col px-4 pt-10 pb-16 sm:pt-12">
+      <div className="flex items-center gap-5">
         <img
           src="/avatar.jpg"
           alt=""
@@ -63,11 +63,11 @@ export function HomePage() {
       </div>
 
       {posts.length === 0 ? (
-        <p className="text-muted-foreground pt-8">{t("posts.empty")}</p>
+        <p className="text-muted-foreground mt-10">{t("posts.empty")}</p>
       ) : (
-        <ul>
+        <ul className="mt-10 flex flex-col gap-8">
           {posts.map((post) => (
-            <li key={post.slug} className="flex flex-col gap-2 py-6">
+            <li key={post.slug} className="flex flex-col gap-1.5">
               <time
                 dateTime={post.date}
                 className="text-muted-foreground font-mono text-xs tracking-wide tabular-nums"
