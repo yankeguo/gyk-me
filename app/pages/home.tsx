@@ -53,12 +53,21 @@ export function HomePage() {
             aria-hidden="true"
             className="bg-border hidden h-px flex-1 sm:block"
           />
-          <a
-            href={`mailto:${siteEmail}`}
-            className="text-muted-foreground hover:text-foreground font-mono text-sm tracking-wide underline-offset-4 transition-colors hover:underline sm:shrink-0"
-          >
-            {siteEmail}
-          </a>
+          <div className="flex items-baseline gap-3 sm:shrink-0">
+            <a
+              href={`mailto:${siteEmail}`}
+              className="text-muted-foreground hover:text-foreground font-mono text-sm tracking-wide underline-offset-4 transition-colors hover:underline"
+            >
+              {siteEmail}
+            </a>
+            <a
+              href="/smime.pem"
+              title={t("smime.certificate")}
+              className="text-muted-foreground/70 hover:text-foreground font-mono text-xs tracking-wide underline-offset-4 transition-colors hover:underline"
+            >
+              S/MIME
+            </a>
+          </div>
         </div>
       </div>
 
