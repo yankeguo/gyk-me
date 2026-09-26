@@ -2,7 +2,12 @@ import { type MetaArgs } from "react-router";
 import { Link } from "react-router";
 
 import { posts } from "~/content/posts";
-import { localeFromPathname, localizePath, translator } from "~/lib/i18n";
+import {
+  localeFromPathname,
+  localizePath,
+  siteEmail,
+  translator,
+} from "~/lib/i18n";
 import { useLocale, useTranslate } from "~/lib/use-i18n";
 
 export function homeMeta({ location }: MetaArgs) {
@@ -31,9 +36,26 @@ export function HomePage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col px-4 py-16">
-      <h1 className="font-heading border-b pb-8 text-4xl font-medium tracking-tight">
-        {t("site.name")}
-      </h1>
+      <div className="flex items-center gap-5 border-b pb-8">
+        <img
+          src="/avatar.jpg"
+          alt=""
+          width={64}
+          height={64}
+          className="ring-border size-16 shrink-0 rounded-full object-cover ring-1"
+        />
+        <div className="min-w-0">
+          <h1 className="font-heading text-4xl font-medium tracking-tight">
+            {t("site.name")}
+          </h1>
+          <a
+            href={`mailto:${siteEmail}`}
+            className="text-muted-foreground hover:text-foreground mt-1 inline-block font-mono text-sm tracking-wide underline-offset-4 transition-colors hover:underline"
+          >
+            {siteEmail}
+          </a>
+        </div>
+      </div>
 
       {posts.length === 0 ? (
         <p className="text-muted-foreground pt-8">{t("posts.empty")}</p>
