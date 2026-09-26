@@ -44,13 +44,18 @@ export function HomePage() {
           height={64}
           className="ring-border size-16 shrink-0 rounded-full object-cover ring-1"
         />
-        <div className="min-w-0">
-          <h1 className="font-heading text-4xl font-medium tracking-tight">
+        <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-5">
+          <h1 className="font-heading shrink-0 text-4xl font-medium tracking-tight">
             {t("site.name")}
           </h1>
+          {/* Fills the spare width so the short name and address read as one masthead. */}
+          <span
+            aria-hidden="true"
+            className="bg-border hidden h-px flex-1 sm:block"
+          />
           <a
             href={`mailto:${siteEmail}`}
-            className="text-muted-foreground hover:text-foreground mt-1 inline-block font-mono text-sm tracking-wide underline-offset-4 transition-colors hover:underline"
+            className="text-muted-foreground hover:text-foreground font-mono text-sm tracking-wide underline-offset-4 transition-colors hover:underline sm:shrink-0"
           >
             {siteEmail}
           </a>
