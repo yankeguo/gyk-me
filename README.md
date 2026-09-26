@@ -47,9 +47,10 @@ at build time — in both locales:
 build/
 ├── client/                       # deploy this directory
 │   ├── index.html                # prerendered "/"                 (en)
-│   ├── posts/index.html          # prerendered "/posts"            (en)
 │   ├── posts/weft/index.html     # prerendered "/posts/weft"       (en)
-│   ├── zh/…                      # the same three, in Chinese
+│   ├── zh/…                      # the same pages, in Chinese
+│   ├── robots.txt                # allow every crawler; written by postbuild
+│   ├── sitemap.xml               # both locales, with hreflang
 │   ├── 404.html                  # SPA fallback, written by scripts/postbuild.ts
 │   └── assets/                   # hashed JS/CSS/fonts
 └── server/                       # build-time render bundle (not deployed)
@@ -83,7 +84,30 @@ export default {
 } satisfies Config;
 ```
 
+## Search engines
+
+Crawlers are welcome. `app/lib/seo.ts` builds two files, and
+`scripts/postbuild.ts` writes them into `build/client` after checking that the
+sitemap lists exactly the pages that were prerendered:
+
+- `robots.txt` allows every user agent and points at the sitemap.
+- `sitemap.xml` lists the home page and every post, in English and Chinese.
+  Each URL uses the canonical trailing-slash form, a `lastmod` from the post
+  date (the home page uses the newest post), and reciprocal `hreflang`
+  alternates including `x-default`.
+
+The dev server serves the same module at `/robots.txt` and `/sitemap.xml`. A
+new post is picked up from `app/content/posts.ts`. A new page that is not a
+post has to be added to `indexPages()` in `app/lib/seo.ts`, or the build fails
+the check.
+
+Every HTML page also links the sitemap with `<link rel="sitemap">`, next to
+the existing `canonical` and `hreflang` tags.
+
 ## Posts
+
+The home page is the index: the title is the site name, then the list of posts.
+There is no `/posts` page. Individual articles still live at `/posts/<slug>`.
 
 The site's one parameterized-looking route is deliberately not parameterized.
 `app/routes.ts` declares each post as a static path — `posts/weft`, and its

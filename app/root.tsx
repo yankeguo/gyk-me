@@ -53,6 +53,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           hrefLang="x-default"
           href={absoluteUrl(canonicalPath(localizePath(pathname, "en")))}
         />
+        <link
+          rel="sitemap"
+          type="application/xml"
+          href={absoluteUrl("/sitemap.xml")}
+        />
         {/* The `.ico` comes first so browsers without SVG icon support still
             get a mark; `favicon.svg` adapts to the OS theme on its own. */}
         <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
