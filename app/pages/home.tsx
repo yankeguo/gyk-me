@@ -30,30 +30,30 @@ export function HomePage() {
   const t = useTranslate();
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-16">
-      <h1 className="font-heading text-4xl font-semibold tracking-tight">
+    <div className="mx-auto flex max-w-3xl flex-col px-4 py-16">
+      <h1 className="font-heading border-b pb-8 text-4xl font-medium tracking-tight">
         {t("site.name")}
       </h1>
 
       {posts.length === 0 ? (
-        <p className="text-muted-foreground">{t("posts.empty")}</p>
+        <p className="text-muted-foreground pt-8">{t("posts.empty")}</p>
       ) : (
-        <ul className="flex flex-col gap-8">
+        <ul>
           {posts.map((post) => (
-            <li key={post.slug} className="flex flex-col gap-1">
-              <Link
-                to={localizePath(`/posts/${post.slug}`, locale)}
-                className="font-heading hover:text-muted-foreground text-lg font-medium tracking-tight transition-colors"
-              >
-                {post.locales[locale].title}
-              </Link>
+            <li key={post.slug} className="flex flex-col gap-2 border-b py-6">
               <time
                 dateTime={post.date}
-                className="text-muted-foreground text-xs"
+                className="text-muted-foreground font-mono text-xs tracking-wide tabular-nums"
               >
                 {formatDate(post.date, locale)}
               </time>
-              <p className="text-muted-foreground max-w-prose text-sm">
+              <Link
+                to={localizePath(`/posts/${post.slug}`, locale)}
+                className="font-heading hover:text-primary text-xl font-medium tracking-tight transition-colors"
+              >
+                {post.locales[locale].title}
+              </Link>
+              <p className="text-muted-foreground max-w-prose text-[0.9375rem] leading-relaxed">
                 {post.locales[locale].summary}
               </p>
             </li>

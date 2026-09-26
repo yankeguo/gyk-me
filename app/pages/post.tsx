@@ -35,14 +35,19 @@ export function PostArticle({
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-16">
-      <header className="flex flex-col gap-2">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance">
-          {title}
-        </h1>
-        <time dateTime={post.date} className="text-muted-foreground text-xs">
+      <header className="flex flex-col gap-3 border-b pb-8">
+        <time
+          dateTime={post.date}
+          className="text-muted-foreground font-mono text-xs tracking-wide tabular-nums"
+        >
           {formatDate(post.date, locale)}
         </time>
-        <p className="text-muted-foreground max-w-prose text-sm">{summary}</p>
+        <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
+          {title}
+        </h1>
+        <p className="text-muted-foreground max-w-prose text-base leading-relaxed">
+          {summary}
+        </p>
       </header>
 
       <div className="post mt-10">
@@ -64,7 +69,7 @@ export function PostBackLink() {
   return (
     <Link
       to={localizePath("/", locale)}
-      className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+      className="text-muted-foreground hover:text-primary font-mono text-xs tracking-wide transition-colors"
     >
       ← {t("post.back")}
     </Link>
@@ -77,7 +82,7 @@ export function PostBackLink() {
  */
 export function PostSources({ children }: { children: ReactNode }) {
   return (
-    <p className="text-muted-foreground mt-4 text-xs leading-relaxed">
+    <p className="text-muted-foreground [&_a]:text-primary [&_a]:decoration-primary/40 [&_a]:hover:decoration-primary mt-4 text-xs leading-relaxed [&_a]:underline [&_a]:underline-offset-4 [&_a]:transition-colors">
       {children}
     </p>
   );
