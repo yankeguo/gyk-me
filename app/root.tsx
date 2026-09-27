@@ -12,7 +12,6 @@ import {
 import { SiteFooter } from "~/components/site-footer";
 import { SiteHeader } from "~/components/site-header";
 import { buttonVariants } from "~/components/ui/button";
-import { fontFaceCss, fontPreloads } from "~/lib/fonts";
 import {
   absoluteUrl,
   canonicalPath,
@@ -37,22 +36,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* Latin webfonts, before the blocking theme script so the download
-            starts as the parser enters <head>. font-display:block is in the
-            inlined faces: Latin may wait, it does not swap after paint.
-            Chinese is not preloaded; it uses local fonts only. */}
-        {fontPreloads.map((font) => (
-          <link
-            key={font.href}
-            rel="preload"
-            href={font.href}
-            as="font"
-            type="font/woff2"
-            crossOrigin="anonymous"
-            fetchPriority="high"
-          />
-        ))}
-        <style dangerouslySetInnerHTML={{ __html: fontFaceCss }} />
         {/* Applies the stored theme before the first paint. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <link rel="canonical" href={absoluteUrl(canonicalPath(pathname))} />

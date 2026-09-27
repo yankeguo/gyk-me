@@ -6,26 +6,31 @@
 
 @theme inline {
   /*
-   * Latin webfonts are the self-hosted files from app/lib/fonts.ts, and their
-   * unicode-range is Latin only. Everything after the webfont is a face the
-   * OS already has — never a downloaded Chinese family.
-   * System Latin sits ahead of the CJK list so a missed webfont falls back
-   * to Segoe UI or Palatino, not to PingFang or Songti's Latin.
+   * Local faces only, in the order a browser should walk them.
+   * ui-sans-serif / -apple-system / Segoe UI cover the platform UI face.
+   * Named Latin faces come before any CJK family: PingFang, YaHei, and
+   * Songti also contain Latin, and would otherwise take English with them.
+   * Han text then resolves to the gothic or songti the OS already ships.
+   * Emoji faces close each list; the text faces do not carry color emoji.
    */
   --font-sans:
-    "Source Sans 3 Variable", "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei",
-    "微软雅黑", "HarmonyOS Sans SC", "Noto Sans CJK SC", "Noto Sans SC",
-    "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", "DejaVu Sans",
+    Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI",
+    "Microsoft YaHei", "微软雅黑", "HarmonyOS Sans SC", "Noto Sans CJK SC",
+    "Noto Sans SC", "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-serif:
-    "Newsreader Variable", "Iowan Old Style", "Palatino Linotype", Palatino,
-    "Times New Roman", "Songti SC", "STSong", "SimSun", "宋体",
-    "Noto Serif CJK SC", "Noto Serif SC", "Source Han Serif SC", serif;
+    "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, Cambria,
+    "Noto Serif", "Liberation Serif", "Times New Roman", "Songti SC", STSong,
+    SimSun, "宋体", "Noto Serif CJK SC", "Noto Serif SC", "Source Han Serif SC",
+    serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
   --font-heading: var(--font-serif);
   --font-mono:
-    "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas,
-    "Liberation Mono", "PingFang SC", "Microsoft YaHei UI", "Noto Sans CJK SC",
-    monospace;
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Cascadia Mono",
+    "Liberation Mono", "DejaVu Sans Mono", "Courier New", "PingFang SC",
+    "Microsoft YaHei UI", "Noto Sans CJK SC", "WenQuanYi Micro Hei", monospace,
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
   --default-transition-duration: 120ms;
   --default-transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
   --shadow-sm: 0 1px 1px oklch(0.28 0.02 50 / 0.05);
@@ -166,9 +171,6 @@
   }
   ::selection {
     background: color-mix(in oklch, var(--primary) 24%, transparent);
-  }
-  .font-heading {
-    font-optical-sizing: auto;
   }
 }
 
