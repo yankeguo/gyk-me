@@ -218,11 +218,11 @@ function TasteEn() {
         The money does not leave. It stops paying for volume and starts paying
         for specification. The same molding shop, given a vague drawing or a
         drawing that has already decided the chamfer, how it feels in the hand,
-        and the tolerance, is in two different businesses. One sells capacity. The other
-        carries out someone else's judgement. Capacity is priced by the next
-        shop that can do it. The judgement is priced by whether it is worth
-        copying. Hard and scarce are different. Once enough people can do a hard
-        thing, the price leaves it.
+        and the tolerance, is in two different businesses. One sells capacity.
+        The other carries out someone else's judgement. Capacity is priced by
+        the next shop that can do it. The judgement is priced by whether it is
+        worth copying. Hard and scarce are different. Once enough people can do
+        a hard thing, the price leaves it.
       </p>
       <h2>Intelligence is turning into the same kind of thing</h2>
       <p>
