@@ -89,7 +89,7 @@ export function HomePage() {
               >
                 {post.locales[locale].title}
               </Link>
-              <p className="text-muted-foreground max-w-prose text-[0.9375rem] leading-relaxed">
+              <p className="text-muted-foreground w-full text-[0.9375rem] leading-relaxed">
                 {post.locales[locale].summary}
               </p>
             </li>
