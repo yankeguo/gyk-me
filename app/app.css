@@ -1,22 +1,31 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/newsreader";
-@import "@fontsource-variable/source-sans-3";
-@import "@fontsource/ibm-plex-mono/400.css";
-@import "@fontsource/ibm-plex-mono/500.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /*
+   * Latin webfonts are the self-hosted files from app/lib/fonts.ts, and their
+   * unicode-range is Latin only. Everything after the webfont is a face the
+   * OS already has — never a downloaded Chinese family.
+   * System Latin sits ahead of the CJK list so a missed webfont falls back
+   * to Segoe UI or Palatino, not to PingFang or Songti's Latin.
+   */
   --font-sans:
-    "Source Sans 3 Variable", "PingFang SC", "Noto Sans SC", "Microsoft YaHei",
-    sans-serif;
+    "Source Sans 3 Variable", "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei",
+    "微软雅黑", "HarmonyOS Sans SC", "Noto Sans CJK SC", "Noto Sans SC",
+    "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
   --font-serif:
-    "Newsreader Variable", "Iowan Old Style", "Palatino Linotype", "Songti SC",
-    "Noto Serif SC", serif;
+    "Newsreader Variable", "Iowan Old Style", "Palatino Linotype", Palatino,
+    "Times New Roman", "Songti SC", "STSong", "SimSun", "宋体",
+    "Noto Serif CJK SC", "Noto Serif SC", "Source Han Serif SC", serif;
   --font-heading: var(--font-serif);
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-mono:
+    "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas,
+    "Liberation Mono", "PingFang SC", "Microsoft YaHei UI", "Noto Sans CJK SC",
+    monospace;
   --default-transition-duration: 120ms;
   --default-transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
   --shadow-sm: 0 1px 1px oklch(0.28 0.02 50 / 0.05);
