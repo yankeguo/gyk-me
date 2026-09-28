@@ -20,6 +20,12 @@ export const languageTags: Record<Locale, string> = {
   zh: "zh-CN",
 };
 
+/** Open Graph locales use underscores, unlike the BCP 47 tags above. */
+export const openGraphLocales: Record<Locale, string> = {
+  en: "en_US",
+  zh: "zh_CN",
+};
+
 export const siteUrl = "https://gyk.me";
 
 /** Used in `<title>`; the catalogues also carry it as `site.name`. */
@@ -84,6 +90,7 @@ const en = {
   "posts.empty": "Nothing published yet.",
   "smime.certificate": "S/MIME certificate",
   "post.back": "All posts",
+  "skip.content": "Skip to content",
   loading: "Loading…",
   "error.title": "Oops!",
   "error.status": "Error",
@@ -107,6 +114,7 @@ const zh: Record<MessageKey, string> = {
   "posts.empty": "还没有发布任何文章。",
   "smime.certificate": "S/MIME 证书",
   "post.back": "全部文章",
+  "skip.content": "跳到正文",
   loading: "加载中…",
   "error.title": "出错了",
   "error.status": "错误",

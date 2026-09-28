@@ -1,18 +1,8 @@
-import type { MetaArgs } from "react-router";
-
 import { taste } from "~/content/taste";
-import { localeFromPathname, siteName } from "~/lib/i18n";
 import { useLocale } from "~/lib/use-i18n";
-import { PostArticle, PostBackLink, PostSources } from "~/pages/post";
+import { PostArticle, PostBackLink, PostSources, postMeta } from "~/pages/post";
 
-export function tastePostMeta({ location }: MetaArgs) {
-  const locale = localeFromPathname(location.pathname);
-
-  return [
-    { title: `${taste.locales[locale].title} — ${siteName}` },
-    { name: "description", content: taste.locales[locale].summary },
-  ];
-}
+export const tastePostMeta = postMeta(taste);
 
 function Sources() {
   const locale = useLocale();
@@ -28,7 +18,7 @@ function Sources() {
       >
         公告
       </a>
-      ，页面更新记到 9 月 22 日，于 2026 年 9 月 27 日核对。omakase 的说法见其
+      ，页面更新记到 9 月 22 日，于 2026 年 9 月 27 日核对。omakase 的说法见其{" "}
       <a
         href="https://learn.omacom.io/3/omacom/76/omakase-computing"
         target="_blank"
@@ -44,14 +34,14 @@ function Sources() {
       >
         公开赞助说明
       </a>
-      。发行版「更接近 Arch 加个人配置」的批评，见
+      。发行版「更接近 Arch 加个人配置」的批评，见{" "}
       <a
         href="https://www.theregister.com/software/2026/09/17/omarchy-gains-185m-in-backing-fresh-converts-and-fierce-critics/5296780"
         target="_blank"
         rel="noreferrer"
       >
         The Register
-      </a>
+      </a>{" "}
       9 月 17 日的报道。
     </PostSources>
   ) : (
