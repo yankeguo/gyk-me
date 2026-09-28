@@ -42,19 +42,31 @@ export function HomePage() {
             aria-hidden="true"
             className="bg-border hidden h-px flex-1 sm:block"
           />
-          <div className="flex items-baseline gap-3 sm:shrink-0">
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 sm:shrink-0">
+            <span className="flex items-baseline gap-3">
+              <a
+                href={`mailto:${siteEmail}`}
+                className="text-muted-foreground hover:text-foreground font-mono text-sm tracking-wide underline-offset-4 transition-colors hover:underline"
+              >
+                {siteEmail}
+              </a>
+              <a
+                href="/smime.pem"
+                title={t("smime.certificate")}
+                className="text-muted-foreground/70 hover:text-foreground font-mono text-xs tracking-wide underline-offset-4 transition-colors hover:underline"
+              >
+                S/MIME
+              </a>
+            </span>
             <a
-              href={`mailto:${siteEmail}`}
-              className="text-muted-foreground hover:text-foreground font-mono text-sm tracking-wide underline-offset-4 transition-colors hover:underline"
-            >
-              {siteEmail}
-            </a>
-            <a
-              href="/smime.pem"
-              title={t("smime.certificate")}
+              href="https://github.com/sponsors/yankeguo"
+              target="_blank"
+              rel="noreferrer"
+              aria-label={t("sponsor.link")}
+              title={t("sponsor.link")}
               className="text-muted-foreground/70 hover:text-foreground font-mono text-xs tracking-wide underline-offset-4 transition-colors hover:underline"
             >
-              S/MIME
+              {t("sponsor.label")}
             </a>
           </div>
         </div>
