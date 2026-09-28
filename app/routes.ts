@@ -17,11 +17,13 @@ import {
  */
 export default [
   index("routes/home.tsx"),
+  route("posts/random-room", "routes/post.random-room.tsx"),
   route("posts/taste", "routes/post.taste.tsx"),
   route("posts/weft", "routes/post.weft.tsx"),
   route("posts/sensor-actuator", "routes/post.sensor-actuator.tsx"),
   ...prefix("zh", [
     index("routes/zh/home.tsx"),
+    route("posts/random-room", "routes/zh/post.random-room.tsx"),
     route("posts/taste", "routes/zh/post.taste.tsx"),
     route("posts/weft", "routes/zh/post.weft.tsx"),
     route("posts/sensor-actuator", "routes/zh/post.sensor-actuator.tsx"),
