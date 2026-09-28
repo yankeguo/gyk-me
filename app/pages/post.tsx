@@ -50,7 +50,7 @@ export function PostArticle({
         <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
           {title}
         </h1>
-        <p className="text-muted-foreground max-w-prose text-base leading-relaxed text-pretty">
+        <p className="text-muted-foreground w-full text-base leading-relaxed text-pretty">
           {summary}
         </p>
       </header>
