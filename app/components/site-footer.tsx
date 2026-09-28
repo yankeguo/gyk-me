@@ -1,7 +1,9 @@
 /**
- * The GitHub link lives here on purpose: a quiet icon at the edge of the
- * footer, not a call to action competing with the page.
+ * GitHub lives here on purpose: a quiet mark at the edge of the footer, with
+ * the sponsor link beside it, not a call to action competing with the page.
  */
+import { useTranslate } from "~/lib/use-i18n";
+
 function GithubMark({ className }: { className?: string }) {
   return (
     <svg
@@ -16,20 +18,34 @@ function GithubMark({ className }: { className?: string }) {
 }
 
 export function SiteFooter() {
+  const t = useTranslate();
+
   return (
     <footer className="border-t">
       <div className="text-muted-foreground mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-6">
         <span className="font-mono text-xs tracking-wide">gyk.me</span>
-        <a
-          href="https://github.com/yankeguo"
-          target="_blank"
-          rel="noreferrer"
-          aria-label="GitHub"
-          title="GitHub"
-          className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring/50 -mr-1 rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none"
-        >
-          <GithubMark className="size-4" />
-        </a>
+        <div className="-mr-1 flex items-center gap-2">
+          <a
+            href="https://github.com/sponsors/yankeguo"
+            target="_blank"
+            rel="noreferrer"
+            aria-label={t("sponsor.link")}
+            title={t("sponsor.link")}
+            className="hover:text-foreground px-1 font-mono text-xs tracking-wide underline-offset-4 transition-colors hover:underline"
+          >
+            {t("sponsor.label")}
+          </a>
+          <a
+            href="https://github.com/yankeguo"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="GitHub"
+            title="GitHub"
+            className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring/50 rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          >
+            <GithubMark className="size-4" />
+          </a>
+        </div>
       </div>
     </footer>
   );
