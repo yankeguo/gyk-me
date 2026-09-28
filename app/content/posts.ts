@@ -35,7 +35,3 @@ export type Post = {
 
 /** Newest first — the order the index renders them in. */
 export const posts: Post[] = [taste, sensorActuator, weft];
-
-export function postBySlug(slug: string | undefined): Post | undefined {
-  return posts.find((post) => post.slug === slug);
-}

@@ -1,33 +1,22 @@
-import { type MetaArgs } from "react-router";
-import { Link } from "react-router";
+import { Link, type MetaArgs } from "react-router";
 
 import { posts } from "~/content/posts";
+import { formatDate } from "~/lib/format-date";
 import {
   localeFromPathname,
   localizePath,
   siteEmail,
   translator,
 } from "~/lib/i18n";
+import { documentMeta } from "~/lib/meta";
 import { useLocale, useTranslate } from "~/lib/use-i18n";
 
 export function homeMeta({ location }: MetaArgs) {
   const t = translator(localeFromPathname(location.pathname));
-  return [
-    { title: t("meta.home.title") },
-    { name: "description", content: t("meta.home.description") },
-  ];
-}
-
-function formatDate(date: string, locale: string): string {
-  const parsed = new Date(`${date}T00:00:00Z`);
-  if (Number.isNaN(parsed.valueOf())) return date;
-
-  return new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {
-    year: "numeric",
-    month: locale === "zh" ? "long" : "short",
-    day: "numeric",
-    timeZone: "UTC",
-  }).format(parsed);
+  return documentMeta({
+    title: t("meta.home.title"),
+    description: t("meta.home.description"),
+  });
 }
 
 export function HomePage() {
@@ -89,7 +78,7 @@ export function HomePage() {
               >
                 {post.locales[locale].title}
               </Link>
-              <p className="text-muted-foreground w-full text-[0.9375rem] leading-relaxed">
+              <p className="text-muted-foreground w-full text-[0.9375rem] leading-relaxed text-pretty">
                 {post.locales[locale].summary}
               </p>
             </li>

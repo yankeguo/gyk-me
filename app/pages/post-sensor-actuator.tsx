@@ -1,18 +1,8 @@
-import type { MetaArgs } from "react-router";
-
 import { sensorActuator } from "~/content/sensor-actuator";
-import { localeFromPathname, siteName } from "~/lib/i18n";
 import { useLocale } from "~/lib/use-i18n";
-import { PostArticle, PostBackLink, PostSources } from "~/pages/post";
+import { PostArticle, PostBackLink, PostSources, postMeta } from "~/pages/post";
 
-export function sensorActuatorPostMeta({ location }: MetaArgs) {
-  const locale = localeFromPathname(location.pathname);
-
-  return [
-    { title: `${sensorActuator.locales[locale].title} — ${siteName}` },
-    { name: "description", content: sensorActuator.locales[locale].summary },
-  ];
-}
+export const sensorActuatorPostMeta = postMeta(sensorActuator);
 
 function Sources() {
   const locale = useLocale();

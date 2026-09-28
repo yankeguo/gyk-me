@@ -1,20 +1,25 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router";
+import { Link, type MetaArgs } from "react-router";
 
 import type { Post } from "~/content/posts";
-import { localizePath } from "~/lib/i18n";
+import { formatDate } from "~/lib/format-date";
+import { localeFromPathname, localizePath, siteName } from "~/lib/i18n";
+import { documentMeta } from "~/lib/meta";
 import { useLocale, useTranslate } from "~/lib/use-i18n";
 
-function formatDate(date: string, locale: string): string {
-  const parsed = new Date(`${date}T00:00:00Z`);
-  if (Number.isNaN(parsed.valueOf())) return date;
+/** `meta` for a post route. The same function serves both locales. */
+export function postMeta(post: Post) {
+  return ({ location }: MetaArgs) => {
+    const { title, summary } =
+      post.locales[localeFromPathname(location.pathname)];
 
-  return new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {
-    year: "numeric",
-    month: locale === "zh" ? "long" : "short",
-    day: "numeric",
-    timeZone: "UTC",
-  }).format(parsed);
+    return documentMeta({
+      title: `${title} — ${siteName}`,
+      description: summary,
+      type: "article",
+      published: post.date,
+    });
+  };
 }
 
 /**
@@ -45,7 +50,7 @@ export function PostArticle({
         <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
           {title}
         </h1>
-        <p className="text-muted-foreground max-w-prose text-base leading-relaxed">
+        <p className="text-muted-foreground max-w-prose text-base leading-relaxed text-pretty">
           {summary}
         </p>
       </header>

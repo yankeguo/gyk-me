@@ -14,10 +14,13 @@ import { SiteHeader } from "~/components/site-header";
 import { buttonVariants } from "~/components/ui/button";
 import {
   absoluteUrl,
+  alternateLocale,
   canonicalPath,
   languageTags,
   locales,
   localizePath,
+  openGraphLocales,
+  siteName,
 } from "~/lib/i18n";
 import { themeInitScript } from "~/lib/theme";
 import { useLocale, useTranslate } from "~/lib/use-i18n";
@@ -32,13 +35,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
 
   return (
-    <html lang={languageTags[locale]}>
+    <html lang={languageTags[locale]} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* Applies the stored theme before the first paint. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <link rel="canonical" href={absoluteUrl(canonicalPath(pathname))} />
+        <meta property="og:site_name" content={siteName} />
+        <meta
+          property="og:url"
+          content={absoluteUrl(canonicalPath(pathname))}
+        />
+        <meta property="og:locale" content={openGraphLocales[locale]} />
+        <meta
+          property="og:locale:alternate"
+          content={openGraphLocales[alternateLocale(locale)]}
+        />
         {locales.map((alternate) => (
           <link
             key={alternate}
@@ -89,10 +102,15 @@ export function HydrateFallback() {
 }
 
 export default function App() {
+  const t = useTranslate();
+
   return (
     <div className="flex min-h-svh flex-col">
+      <a href="#content" className="skip-link">
+        {t("skip.content")}
+      </a>
       <SiteHeader />
-      <main className="flex-1">
+      <main id="content" tabIndex={-1} className="flex-1 outline-none">
         <Outlet />
       </main>
       <SiteFooter />

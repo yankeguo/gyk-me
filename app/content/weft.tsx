@@ -6,7 +6,17 @@
  * load. Prose styling lives in `app/app.css` under `.post`.
  */
 
+import { createElement } from "react";
+
 import type { Post } from "./posts";
+
+/**
+ * Built with `createElement` so a formatter cannot insert a whitespace text
+ * node between `pre` and `code`. In JSX that node is a blank first line.
+ */
+function CodeBlock({ children }: { children: string }) {
+  return createElement("pre", null, createElement("code", null, children));
+}
 
 function WeftZh() {
   return (
@@ -75,32 +85,26 @@ function WeftZh() {
         整个范式落在组件契约上。契约只交代四件事：身份、配置面、提供的服务、要跑的入口。少一件都织不起来，多一件都会让每个组件都背上不属于自己的负担。一个组件就是一个
         Go 包，导出唯一一个实现了契约的值：
       </p>
-      <pre>
-        <code>{`var Component = &component{}
+      <CodeBlock>{`var Component = &component{}
 
 func (c *component) Name() string { return "llm.dummy" }   // 身份，也是配置命名空间
 func (c *component) Config() any  { return &c.cfg }        // 配置面
 func (c *component) Package() func(do.Injector) { /* 提供的服务 */ }
-func (c *component) Entries() []weft.Entry { return []weft.Entry{weft.Use[*Client]()} }`}</code>
-      </pre>
+func (c *component) Entries() []weft.Entry { return []weft.Entry{weft.Use[*Client]()} }`}</CodeBlock>
       <p>
         配置就地声明在结构体上，字段名推导键名。身份加键名推导出环境变量名，所以
         <code>llm.dummy</code> 这个身份加 <code>api_key</code> 这个键，得到的是
         <code>WEFT_LLM_DUMMY_API_KEY</code>。没有谁来分配前缀，也不会撞车。
       </p>
-      <pre>
-        <code>{`type Config struct {
+      <CodeBlock>{`type Config struct {
     APIKey  string        \`weft:"api_key" required:"true" secret:"true"\`
     BaseURL string        \`weft:"base_url" default:"https://example.invalid/v1"\`
     Timeout time.Duration \`weft:"timeout" default:"5s"\`
-}`}</code>
-      </pre>
+}`}</CodeBlock>
       <p>配方全文只有这么多：</p>
-      <pre>
-        <code>{`func main() {
+      <CodeBlock>{`func main() {
     boot.Main(dummyllm.Component)
-}`}</code>
-      </pre>
+}`}</CodeBlock>
       <p>
         配方是 Go
         代码而不是配置文件，所以「引用了不存在的组件」根本编译不过。组合在编译期就被编译器兜住了。
@@ -146,11 +150,9 @@ func (c *component) Entries() []weft.Entry { return []weft.Entry{weft.Use[*Clien
         <code>llm</code>{" "}
         不是组件，是一组类型加一个方法，是「怎么把消息、工具交给大模型，又怎么把回应流拿回来」的唯一一份说法：
       </p>
-      <pre>
-        <code>{`type Provider interface {
+      <CodeBlock>{`type Provider interface {
     Do(ctx context.Context, req llm.Request) iter.Seq2[llm.Event, error]
-}`}</code>
-      </pre>
+}`}</CodeBlock>
       <p>
         一次调用产出一条事件流：文本增量、工具调用、结束。消息里的内容块是并列的：文字、工具调用、工具结果、图片。图片带着自己的媒体类型和来源（一段字节，或者一个链接），所以以后加音频、视频不用再动接口。
       </p>
@@ -302,14 +304,12 @@ function WeftEn() {
         one and every component carries weight that is not its own. A component
         is a Go package exporting one value that satisfies it:
       </p>
-      <pre>
-        <code>{`var Component = &component{}
+      <CodeBlock>{`var Component = &component{}
 
 func (c *component) Name() string { return "llm.dummy" }   // identity, and the config namespace
 func (c *component) Config() any  { return &c.cfg }        // configuration surface
 func (c *component) Package() func(do.Injector) { /* the services it provides */ }
-func (c *component) Entries() []weft.Entry { return []weft.Entry{weft.Use[*Client]()} }`}</code>
-      </pre>
+func (c *component) Entries() []weft.Entry { return []weft.Entry{weft.Use[*Client]()} }`}</CodeBlock>
       <p>
         Configuration is declared in place, as fields on a struct, and the field
         name derives the key. Identity plus key derives the environment
@@ -317,19 +317,15 @@ func (c *component) Entries() []weft.Entry { return []weft.Entry{weft.Use[*Clien
         <code>api_key</code> give <code>WEFT_LLM_DUMMY_API_KEY</code>. Nobody
         hands out prefixes and nothing collides.
       </p>
-      <pre>
-        <code>{`type Config struct {
+      <CodeBlock>{`type Config struct {
     APIKey  string        \`weft:"api_key" required:"true" secret:"true"\`
     BaseURL string        \`weft:"base_url" default:"https://example.invalid/v1"\`
     Timeout time.Duration \`weft:"timeout" default:"5s"\`
-}`}</code>
-      </pre>
+}`}</CodeBlock>
       <p>A recipe is the shortest file in the repository:</p>
-      <pre>
-        <code>{`func main() {
+      <CodeBlock>{`func main() {
     boot.Main(dummyllm.Component)
-}`}</code>
-      </pre>
+}`}</CodeBlock>
       <p>
         A recipe is Go code rather than a config file, so referring to a
         component that does not exist does not compile. The compiler catches the
@@ -395,11 +391,9 @@ func (c *component) Entries() []weft.Entry { return []weft.Entry{weft.Use[*Clien
         method, the single account of how messages and tools reach a model and
         how the response stream comes back:
       </p>
-      <pre>
-        <code>{`type Provider interface {
+      <CodeBlock>{`type Provider interface {
     Do(ctx context.Context, req llm.Request) iter.Seq2[llm.Event, error]
-}`}</code>
-      </pre>
+}`}</CodeBlock>
       <p>
         One call produces one stream of events: text deltas, tool calls, done.
         The parts of a message are peers — text, tool call, tool result, image.
