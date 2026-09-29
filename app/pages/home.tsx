@@ -33,10 +33,13 @@ export function HomePage() {
           height={64}
           className="ring-border size-16 shrink-0 rounded-full object-cover ring-1"
         />
-        <div className="flex min-w-0 flex-col gap-1">
+        {/* The serif ink sits a few pixels above its line box; the nudge
+            recenters the name and the contact line on the avatar. */}
+        <div className="flex min-w-0 translate-y-[3px] flex-col gap-3.5">
           <h1 className="font-heading text-4xl font-medium tracking-tight">
             {t("site.name")}
           </h1>
+          {/* One rhythm: the address, then the three quiet links at an even step. */}
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
             <a
               href={`mailto:${siteEmail}`}
@@ -44,7 +47,7 @@ export function HomePage() {
             >
               {siteEmail}
             </a>
-            <span className="flex items-baseline gap-3">
+            <span className="inline-flex items-baseline gap-x-4">
               <a
                 href="/smime.pem"
                 title={t("smime.certificate")}
@@ -59,17 +62,17 @@ export function HomePage() {
               >
                 GPG
               </a>
+              <a
+                href="https://github.com/sponsors/yankeguo"
+                target="_blank"
+                rel="noreferrer"
+                aria-label={t("sponsor.link")}
+                title={t("sponsor.link")}
+                className="text-muted-foreground/70 hover:text-foreground font-mono text-xs tracking-wide underline-offset-4 transition-colors hover:underline"
+              >
+                {t("sponsor.label")}
+              </a>
             </span>
-            <a
-              href="https://github.com/sponsors/yankeguo"
-              target="_blank"
-              rel="noreferrer"
-              aria-label={t("sponsor.link")}
-              title={t("sponsor.link")}
-              className="text-muted-foreground/70 hover:text-foreground font-mono text-xs tracking-wide underline-offset-4 transition-colors hover:underline"
-            >
-              {t("sponsor.label")}
-            </a>
           </div>
         </div>
       </div>
