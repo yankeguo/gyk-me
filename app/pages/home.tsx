@@ -33,29 +33,31 @@ export function HomePage() {
           height={64}
           className="ring-border size-16 shrink-0 rounded-full object-cover ring-1"
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-5">
-          <h1 className="font-heading shrink-0 text-4xl font-medium tracking-tight">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h1 className="font-heading text-4xl font-medium tracking-tight">
             {t("site.name")}
           </h1>
-          {/* Fills the spare width so the short name and address read as one masthead. */}
-          <span
-            aria-hidden="true"
-            className="bg-border hidden h-px flex-1 sm:block"
-          />
-          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 sm:shrink-0">
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <a
+              href={`mailto:${siteEmail}`}
+              className="text-muted-foreground hover:text-foreground font-mono text-sm tracking-wide underline-offset-4 transition-colors hover:underline"
+            >
+              {siteEmail}
+            </a>
             <span className="flex items-baseline gap-3">
-              <a
-                href={`mailto:${siteEmail}`}
-                className="text-muted-foreground hover:text-foreground font-mono text-sm tracking-wide underline-offset-4 transition-colors hover:underline"
-              >
-                {siteEmail}
-              </a>
               <a
                 href="/smime.pem"
                 title={t("smime.certificate")}
                 className="text-muted-foreground/70 hover:text-foreground font-mono text-xs tracking-wide underline-offset-4 transition-colors hover:underline"
               >
                 S/MIME
+              </a>
+              <a
+                href="/gpg.asc"
+                title={t("gpg.publicKey")}
+                className="text-muted-foreground/70 hover:text-foreground font-mono text-xs tracking-wide underline-offset-4 transition-colors hover:underline"
+              >
+                GPG
               </a>
             </span>
             <a
