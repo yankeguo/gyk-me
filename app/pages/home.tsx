@@ -39,8 +39,8 @@ export function HomePage() {
           <h1 className="font-heading text-4xl font-medium tracking-tight">
             {t("site.name")}
           </h1>
-          {/* One rhythm: the address, then the three quiet links at an even step. */}
-          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          {/* The mono stem sits left of the serif. A small indent lines the address up with the name. */}
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 pl-1">
             <a
               href={`mailto:${siteEmail}`}
               className="text-muted-foreground hover:text-foreground font-mono text-sm tracking-wide underline-offset-4 transition-colors hover:underline"
