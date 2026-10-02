@@ -10,6 +10,7 @@
 
 import type { Locale } from "~/lib/i18n";
 
+import { policyRehearsal } from "./policy-rehearsal";
 import { randomRoom } from "./random-room";
 import { sensorActuator } from "./sensor-actuator";
 import { taste } from "./taste";
@@ -35,4 +36,10 @@ export type Post = {
 };
 
 /** Newest first — the order the index renders them in. */
-export const posts: Post[] = [randomRoom, taste, sensorActuator, weft];
+export const posts: Post[] = [
+  policyRehearsal,
+  randomRoom,
+  taste,
+  sensorActuator,
+  weft,
+];
