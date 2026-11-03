@@ -17,6 +17,7 @@ import {
  */
 export default [
   index("routes/home.tsx"),
+  route("posts/html-as-interface", "routes/post.html-as-interface.tsx"),
   route("posts/policy-rehearsal", "routes/post.policy-rehearsal.tsx"),
   route("posts/random-room", "routes/post.random-room.tsx"),
   route("posts/taste", "routes/post.taste.tsx"),
@@ -24,6 +25,7 @@ export default [
   route("posts/sensor-actuator", "routes/post.sensor-actuator.tsx"),
   ...prefix("zh", [
     index("routes/zh/home.tsx"),
+    route("posts/html-as-interface", "routes/zh/post.html-as-interface.tsx"),
     route("posts/policy-rehearsal", "routes/zh/post.policy-rehearsal.tsx"),
     route("posts/random-room", "routes/zh/post.random-room.tsx"),
     route("posts/taste", "routes/zh/post.taste.tsx"),

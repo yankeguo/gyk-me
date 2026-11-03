@@ -10,6 +10,7 @@
 
 import type { Locale } from "~/lib/i18n";
 
+import { htmlAsInterface } from "./html-as-interface";
 import { policyRehearsal } from "./policy-rehearsal";
 import { randomRoom } from "./random-room";
 import { sensorActuator } from "./sensor-actuator";
@@ -37,6 +38,7 @@ export type Post = {
 
 /** Newest first — the order the index renders them in. */
 export const posts: Post[] = [
+  htmlAsInterface,
   policyRehearsal,
   randomRoom,
   taste,
