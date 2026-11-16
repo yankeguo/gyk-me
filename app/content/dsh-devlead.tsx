@@ -1,10 +1,10 @@
 /**
  * The `dsh-devlead` post, Chinese and English.
  *
- * An introduction to orchestrating several repositories through ordinary,
- * human-visible DSH Sessions: a human-only mode switch, dispatch-first work,
- * durable notifications, and the model and isolation options added in v0.2.3.
- * The two bodies carry the same argument, not the same sentences.
+ * A first-person note on why the plugin exists: dispatch from an ordinary
+ * Session to ordinary Sessions, a switch only a human can flip, and the
+ * notification loop that ends the waiting. The two bodies make the same
+ * argument in their own words rather than translating each other.
  */
 
 import type { Post } from "./posts";
@@ -13,107 +13,104 @@ function DshDevleadZh() {
   return (
     <>
       <p>
-        我最近让 DSH
-        同时处理几个仓库时，最消耗注意力的不是某一项修改，而是追踪工作究竟去了哪里。这个会话里派出的
-        Agent
-        做到了哪一步，那个仓库里的改动由谁负责，失败后应该回到哪里继续？如果执行者只是一个临时
-        subagent，我往往只能等父 Agent
-        带回摘要，不能把它当成一个独立会话打开、追问，更不能直接接管。
+        三个仓库一起动的时候，我最早的办法是开三个会话，然后自己在中间跑。改完一个切过去看下一个，谁卡住了就去问谁。切窗口本身不累，累的是记住每件事停在哪一步：那边
+        CI 挂了没有，这边 README
+        补到一半的那句话是不是还在等一个结论。一天下来，真正写完的代码没多少，倒是一直在做转述。
       </p>
       <p>
-        subagent
-        很适合一次性的并行子任务，但跨仓库、跨会话的工作还有另一组要求：执行过程要看得见，状态要留得下，人和模型都要能在同一个地方继续。我不想为此再造一套隐藏的控制面。于是有了
-        <strong>dsh-devlead</strong>：让一个普通的 DSH Session
-        承担调度者角色，把任务派给其他同样普通、可见、可接管的 Session。
+        后来我试过让一个会话开 subagent 去办。活能干完，但子 agent
+        对我来说更像个黑盒：我等它回来交一份总结，想追问一句“为什么这么改”，还得让父会话再翻译一遍。活一拖就是好几轮，到第三轮，我自己也说不清当初的来龙去脉被压缩成了哪几句话。
       </p>
       <p>
-        这篇文章介绍它当前的设计与能力。文中版本是 <strong>v0.2.3</strong>
-        ，重点不是“让 Agent
-        同时做更多事”，而是让多仓库编排保持一条可以被人检查和介入的路径。
+        <strong>dsh-devlead</strong> 就是从这个别扭里长出来的。它没有把子 agent
+        包得更聪明，只做了一件事：让调度发生在一个普通会话里，派出去的东西也是普通会话。这篇写的是
+        v0.2.3，包括它为什么默认只派活不写代码、通知怎么把 lead
+        叫醒，以及哪些地方我到现在也没解决。
       </p>
 
-      <h2>缺少的不是并行，而是可接管性</h2>
+      <h2>并行不是难点，进不去才是</h2>
       <p>
-        一个会话内部启动
-        subagent，模型可以等待结果，再汇总回答。这条路径足够短，适合边界清楚的子任务。但工作一旦跨仓库、持续若干轮，短板就很具体：subagent
-        通常不是一个能在侧边栏独立打开的普通 Session；它的生命周期依附于父 turn
-        或父 Agent；人看到的常常只是最后的汇报，而不是可以亲自进入的执行现场。
-        状态如果只存在于当前调用的内存里，重启、恢复和接续也会变得更脆弱。
+        subagent 的前提是“一个 turn
+        内解决一个边界清楚的子任务”。这个前提大多数时候成立，所以它快。但它也意味着子任务的生命周期挂在父
+        turn 上：父会话结束，子 agent
+        也就散了。它通常不会作为一个能单独打开的会话出现在侧边栏里，你看不到它中间做了什么，只能看它最后说了什么。
       </p>
       <p>
-        dsh-devlead 因此没有把子 Agent 包装得更复杂，而是把产物换成 DSH
-        已经有的实体。Workspace 通过真实的 <code>ctx.workspaceRegistry</code>{" "}
-        注册；执行任务的子会话是真实普通
-        Session，出现在侧边栏里，可以打开、继续、归档。人随时能走进去补充上下文，模型也能在之后的轮次里续写它。它们不是换了一种名字的
-        subagent。
+        跨仓库的工作不满足这个前提。它要跑很多轮，中间会失败、会卡在等人确认、会因为上游改了接口而掉头。这些时候我想做的往往不是“再派一个”，而是打开那个会话，补一句上下文，或者干脆自己接手。所以问题不是并行不够，而是并行出来的东西我进不去。
       </p>
       <p>
-        这也决定了 DevLead 的角色：
-        <strong>默认负责派发，而不是亲自实现。</strong>
-        它先根据已注册 Workspace
-        的元数据判断任务归属，把背景、目标、开放问题、交付物和验证方式写成自包含简报，再交给归属仓库里的
-        Session。只读检查只用于有限的可行性判断和复核，不是先由 lead
-        把所有代码翻一遍。写入、构建和提交也留在归属 Workspace 的 Session
-        中，除非人在当前对话里明确授权 lead 直接做。
+        dsh-devlead 的做法是换产物，不是加包装。子会话是真的普通
+        Session：在侧边栏里，能打开、能续写、能归档。Workspace 也是真的走{" "}
+        <code>ctx.workspaceRegistry</code>{" "}
+        注册，不是插件自己维护的一份目录。人随时能走进去，模型也能在后面的轮次里接着用同一个会话。
+      </p>
+      <p>
+        这也顺带定下了 lead 的角色：<strong>默认只派活。</strong>它先看已注册
+        Workspace
+        的元数据，判断这事归谁，然后把背景、目标、还没定的问题、交付物、怎么验证写成一封自包含的简报，交给那个仓库里的会话。它可以做一点只读检查，用来判断可行性和复核结论，但不会先把别人的代码翻一遍再动手。写文件、构建、提交都留在归属仓库的会话里，除非我在当前对话里明确说“你直接改”。
       </p>
 
-      <h2>一个普通 Session，加一个人类开关</h2>
+      <h2>这道开关只能由人拨</h2>
       <p>
-        DevLead 不是一种特殊的会话类型。准确地说，它是
-        <strong>普通 Session 加一条持久开关</strong>
-        。人在需要统管多个仓库的会话里执行
-        <code>/devlead on</code>，或者点击 composer 工具条里的小图标；这个
-        Session 才会获得 <code>devlead_*</code> 工具、一段 DevLead system
-        prompt，以及输入框上方的状态条。状态条显示监督中的会话数、运行中数量和最近通知。
+        DevLead
+        不是另一种会话类型。准确地说，它是一个普通会话多了一条持久开关。我在需要统管几个仓库的那个会话里敲{" "}
+        <code>/devlead on</code>，或者点 composer
+        工具条上的小图标，这个会话才多出 <code>devlead_*</code> 工具、一段
+        DevLead system
+        prompt，以及输入框上方那条状态条。状态条上有监督中的会话数、正在跑的数量，和最近一条通知。
       </p>
       <p>
-        开关是人类专属动作。模型没有工具可以替人打开它，普通 Session
-        也看不到这些工具。关闭时，界面上只保留一个小图标，不给每个对话都加一条常驻横幅。开启状态会持久保存，重启或恢复会话后仍然有效；不再需要时，要由人执行
+        开关是人的动作，模型没有工具能替自己打开。这一点是我刻意留的：一个会话要不要获得操纵其他会话的能力，应该由人决定，而不是由模型在某次推理里觉得“这样更高效”。没开的时候，界面上只有那个小图标，不会在每个对话顶上挂一条横幅。开了之后它是持久的，重启、恢复都还在；不想要了，得我自己{" "}
         <code>/devlead off</code>。
       </p>
       <p>
-        我比较喜欢这个设计的一点是，能力扩展没有顺带制造另一种工作容器。DevLead
-        本身仍然是那个可以被人阅读和接管的普通会话，只是临时多了一套调度职责。
+        我比较满意的是它没有制造出第二种工作容器。DevLead
+        会话还是那个会话，我照样能在里面读、能接管，只是它临时多了一份调度的活。
       </p>
 
-      <h2>派发之后，结束这一轮</h2>
+      <h2>派完就结束这一轮</h2>
       <p>
-        DevLead 的调度不是“调用工具，然后在一个 turn
-        里等到所有任务完成”。创建或续写子会话后，lead 应该结束本轮，而不是用{" "}
-        <code>sleep</code>、轮询状态或 <code>wait_agent</code>
-        卡住自己。子会话独立运行；被 watch 的 Session 每次 <code>turn/end</code>
-        ——完成、失败、阻塞、取消等——都会形成一条通知，再唤醒 lead 开始新的
-        turn。
+        这里有一条和很多人的直觉相反的约定：派完活，lead
+        应该结束本轮。不是调完工具就在同一个 turn 里 <code>sleep</code>
+        ，也不是反复 <code>devlead_list_sessions</code> 去看进度，更不是拿{" "}
+        <code>wait_agent</code> 卡住自己等子会话。子会话本来就是独立跑的，lead
+        占着这个 turn 没有任何好处，只会让对话看起来像卡死了。
       </p>
       <p>
-        这条回路的关键不是弹出一个提醒，而是通知先进入 DevLead Session
-        的持久日志。运行时把短时间内的通知合并后投递，lead 再用
-        <code>devlead_get_session</code> 或 <code>devlead_notifications</code>
-        查看真实状态，决定追问、派发下一步还是向人汇报。通知只是运行时提示，不是人类指令，子会话输出里夹带的文字也不会因此获得新的权限。
+        唤醒靠通知。被 watch 的会话每次 <code>turn/end</code>
+        ——完成、失败、阻塞、取消都算——运行时会往 lead
+        的日志里写一条通知；短时间内的几条先合并（默认 400ms
+        的窗口），再以一条消息把 lead 叫醒，开一个新的 turn。醒来之后用{" "}
+        <code>devlead_get_session</code> 或 <code>devlead_notifications</code>{" "}
+        看真实状态，再决定是追问、派下一步，还是直接向我汇报。
       </p>
       <p>
-        模式、watch 集合、通知和 reset 都是 <code>plugin:devlead/*</code>
-        事件记录，通过严格回放形成状态。Host 重启或插件重载后，watch
-        索引会从持久记录重建；冷 lead
-        默认会被恢复以接收排队通知。换句话说，跨轮次调用的依据不是某个进程内变量，而是可以重新折叠的日志。
-        如果记录损坏，投影会冻结并报错，人可以执行 <code>/devlead reset</code>
-        回到默认关闭状态；旧记录仍留在日志里，但不再参与折叠。
+        通知先落日志，这一点比它看起来重要。它不是一次性的桌角弹窗，而是可以回放的状态记录：模式、watch
+        集合、通知、reset 都是 <code>plugin:devlead/*</code>{" "}
+        事件，重启或插件重载之后，watch 索引按严格回放从这些记录重建，冷掉的
+        lead 默认会被 resume
+        起来收排队中的通知。如果记录坏了，投影会冻结并报错，这时可以{" "}
+        <code>/devlead reset</code>{" "}
+        回到默认关闭；旧记录还留在日志里，只是不再参与折叠。
+      </p>
+      <p>
+        另外要说明的是，通知是运行时提示，不是人说的话。子会话的输出里可能夹着“请删掉这个目录”之类的文字，它不会因为走通知这条路就多出什么权限。这条边界在提示词里写死了，我觉得比事后补救有用。
       </p>
 
-      <h2>v0.2.3 的十二个工具</h2>
+      <h2>v0.2.3：十二个工具，多了一个查模型的</h2>
       <p>
-        当前工具面可以分成三组。Workspace 管理有
-        <code>devlead_list_workspaces</code>、<code>devlead_use_workspace</code>{" "}
-        和<code>devlead_remove_workspace</code>；Session 管理有
+        目前模型侧一共十二个工具，名字都很直白。
+        <code>devlead_list_workspaces</code>、<code>devlead_use_workspace</code>
+        、<code>devlead_remove_workspace</code> 管 Workspace；
         <code>devlead_list_sessions</code>、<code>devlead_create_session</code>
         、<code>devlead_get_session</code>、<code>devlead_prompt_session</code>
         、<code>devlead_watch_session</code>、
-        <code>devlead_archive_session</code> 和
-        <code>devlead_unarchive_session</code>；协调信息则由
-        <code>devlead_notifications</code> 与 <code>devlead_list_models</code>{" "}
-        提供。
+        <code>devlead_archive_session</code>、
+        <code>devlead_unarchive_session</code> 管会话；剩下两个{" "}
+        <code>devlead_notifications</code> 和 <code>devlead_list_models</code>
+        ，一个给通知摘要，一个给模型目录。
       </p>
-      <p>一次典型的创建调用大致是这样：</p>
+      <p>一次创建大致长这样：</p>
       <pre>
         <code>{`{
   "workspace": "/Users/me/Workspace/src/api",
@@ -123,54 +120,55 @@ function DshDevleadZh() {
 }`}</code>
       </pre>
       <p>
-        子会话看不到 lead 的对话，所以 prompt 必须自包含。<code>watch</code>{" "}
-        默认就是
-        <code>true</code>，这里写出来只是为了强调通知关系。已有 Session
-        仍在处理同一请求时，应该续写而不是重复创建。
+        子会话看不到 lead 这边聊过什么，所以 prompt 必须自己把话说全。
+        <code>watch</code> 默认就是 <code>true</code>
+        ，例子里的显式写法只是为了让通知关系一眼看得出来。如果归属仓库里已经有一个在处理这件事的
+        live 会话，应该续写它，而不是再开一个。
       </p>
       <p>
-        v0.2.3 是 patch 版本，工具数量从 11 增加到 12。新增的
-        <code>devlead_list_models</code> 返回精简的 Host 模型目录；创建 Session
-        时可以成对指定
-        <code>provider</code> 与 <code>model</code>，并可选指定
+        v0.2.3 是 patch 版本，工具从 11 个变成 12 个，新增的就是{" "}
+        <code>devlead_list_models</code>：返回一份精简过的 Host
+        模型目录，去掉描述之类占 token 的字段。有了它，创建会话时可以成对指定{" "}
+        <code>provider</code> 和 <code>model</code>，再可选地指定{" "}
         <code>reasoning_effort</code>。默认仍然继承 Host
-        默认模型，只有人明确要求，或任务确实需要成本、能力路由或可复现性时才固定路线，而且应先查询目录。选择只记录在这个子
-        Session 上，仅在创建时生效，不改写 profile 默认模型。
+        的默认模型；只有人明确要求，或者这单活确实需要按成本、能力路由，或者要可复现，才值得把路线钉死，而且钉之前应该先查目录，别猜。
+      </p>
+      <p>
+        这个选择只记在子会话上，只在创建时生效，不会反过来改 profile
+        的默认模型。我觉得这条很要紧：一次派发顺手把全局默认改了，是那种事后很难查的坏账。
       </p>
       <p>
         <code>agent_teams</code>{" "}
-        也只在创建时设置。复杂、多步、可并行、适合子代理协作的任务，lead
-        可以自行判断并显式传 <code>true</code>
-        ；简单线性任务通常省略，人类明确要求开关时照做。省略表示不碰 Host
-        默认设置，而不是强行关闭。
+        同样只在创建时设置。复杂、多步、能并行的活，lead 可以自己判断传{" "}
+        <code>true</code>
+        ；简单线性任务一般省略，人明确要求开或关就听人的。省略的意思是不碰 Host
+        的默认值，不是强行关掉，这两个差别经常被误解。
       </p>
       <p>
-        如果 Host 组合了实验性 worktree 服务，<code>isolation: "worktree"</code>
-        可以让新 Session 在首个 prompt
-        前得到独立分支和检出。它是可选、尽力而为的隔离：能力缺失或创建失败时，Session
-        仍在共享 checkout 中创建和运行，结果会如实返回 <code>
-          unavailable
-        </code>{" "}
-        或<code>failed</code>。此时不能假装隔离已经成功，同一 checkout
-        的写入任务应当串行。
+        如果 Host 组合了实验性的 worktree 服务，
+        <code>isolation: "worktree"</code> 能让新会话在第一个 prompt
+        之前拿到自己的分支和检出。这是可选的、尽力而为的隔离：能力不在或者创建失败，会话照样在共享
+        checkout 里建起来并继续跑，结果里如实写 <code>unavailable</code> 或{" "}
+        <code>failed</code>。这种时候不能假装隔离成功了，同一个 checkout
+        上的写入任务得串行做。
       </p>
       <p>
-        收尾同样交给判断，但边界写得很保守。lead
-        可以归档自己创建或派发、已经完成的临时
-        Session，也可以注销明显陈旧、重复、空置或自己创建的 Workspace
-        注册；不能关闭人正在使用的对象，不能用归档掩盖失败，也不能顺手做无关的大清理。归档保留日志且可以恢复；移除
-        Workspace 只是注销，不删除目录。每次自主收尾都必须汇报原因和影响。
+        收尾也交给判断，但边界写得很保守。lead
+        可以归档自己建的、已经完成的临时会话，也可以注销明显陈旧、重复、空着或者自己注册的
+        Workspace。不能关我正在用的东西，不能用归档掩盖失败，也不能顺手做一场无关的大扫除。归档会留着日志、可以恢复；注销
+        Workspace
+        只是取消注册，目录不会删。每次自己动手收尾，都得说清楚为什么、影响是什么。
       </p>
 
-      <h2>安装与兼容性</h2>
+      <h2>装起来一行，兼容性有几处要留意</h2>
       <p>
-        在 desktop profile 中，安装 bundle 即可带入核心服务、工具、命令和界面：
+        在 desktop profile 里装 bundle，核心服务、工具、命令和界面就都带上了：
       </p>
       <pre>
         <code>{`dsh plugin --profile desktop add @yankeguo/dsh-devlead-bundle`}</code>
       </pre>
       <p>
-        项目地址是{" "}
+        项目在{" "}
         <a
           href="https://github.com/yankeguo/dsh-devlead"
           target="_blank"
@@ -198,46 +196,50 @@ function DshDevleadZh() {
       </p>
       <p>
         插件声明支持 <code>DSH &gt;=0.2.2-rc.1 &lt;0.3.0</code>，发布说明覆盖了
-        0.2.2-rc.1、rc.2 和
-        rc.3。基础工具、模型目录与模型选择在三个版本上都可用。差别在 Agent
-        Teams：rc.1 没有对应服务，显式传 <code>agent_teams: true</code> 会返回
-        <code>DEVLEAD_TEAM_UNAVAILABLE</code>，并且不创建 Session；省略或传
-        <code>false</code> 可以继续普通派发。rc.2 起，Host
-        组合该服务时才可启用。这是明确的能力错误，不应和 worktree
-        的自动降级混为一谈。
+        0.2.2-rc.1、rc.2、rc.3。基础工具、模型目录和模型选择在三个版本上都能用。唯一有差别的是
+        Agent Teams：rc.1 里 Host 根本没有这个服务，显式传{" "}
+        <code>agent_teams: true</code> 会拿到{" "}
+        <code>DEVLEAD_TEAM_UNAVAILABLE</code>，会话不会创建；省略或者传{" "}
+        <code>false</code> 就照常派发。rc.2 起，Host
+        组合了这个服务才谈得上启用。这是能力缺失，不是 worktree
+        那种自动降级，别混着看。
       </p>
 
-      <h2>已知限制与取舍</h2>
+      <h2>它现在还做不到的事</h2>
       <p>
-        持久化不等于永远不会错过事件。插件本体卸载期间结束的 turn
-        不会在下次加载时按 watcher 补发；投影只保留最近 64 条通知，默认最多
-        watch 64 个 Session。冷 lead
-        被通知恢复是默认行为，但不是常驻后台调度：插件不会因此创建计划任务或长周期自治目标，也不支持跨进程、跨
-        DSH 实例编排。
+        持久化不等于不会错过事件。插件本体卸载期间结束的
+        turn，下次加载时不会补发通知——事件不是按 watcher 重放的。投影只保留最近
+        64 条通知，默认最多同时 watch 64 个会话。
       </p>
       <p>
-        worktree 也不是完整的 Git 工作流。新检出从源 checkout 的 HEAD
-        开始，未提交、已暂存、未跟踪和被忽略的文件不会复制；已有 Session
-        不能迁入 worktree；分支的审阅、merge 或 cherry-pick
-        仍需另行安排，插件不会自动合并。普通子 Session
-        还意味着它会真实出现在侧边栏，并正常消耗模型额度。
+        冷 lead
+        会被通知叫醒，这是默认行为，但它不是常驻后台调度器。插件不会因此去创建计划任务，也不会顺手给你开一个长周期的自治目标。跨进程、跨
+        DSH 实例的编排也不在范围内。
       </p>
       <p>
-        最后，DevLead 模式开关不是安全沙箱。子 Session 沿用 DSH
-        原本的沙箱和权限模式；安装第三方插件则仍然是信任其代码运行在 Host
-        进程内。可见性改善了操作边界，并没有替代权限边界。
+        worktree 隔离同样不是一个完整的 Git 工作流。新检出从源 checkout 的 HEAD
+        开始，未提交、已暂存、未跟踪和被忽略的文件都不会带过去；已经存在的会话不能迁进
+        worktree；分支的审阅、merge 或者 cherry-pick
+        还得另外安排，插件不会自动合并。普通子会话出现在侧边栏，也会正常消耗额度——它不是免费的影子。
+      </p>
+      <p>
+        最后，DevLead 开关不是安全沙箱。子会话沿用 DSH
+        原本的沙箱和权限模式，装第三方插件仍然是信任它的代码跑在 Host
+        进程里。可见性能让操作边界更清楚，但它替代不了权限边界。
       </p>
 
-      <h2>什么时候值得打开它</h2>
+      <h2>什么时候我会打开它</h2>
       <p>
-        如果任务只是在一个仓库里完成一次修改，普通单会话就够了；一次性的并行子任务，subagent
-        或 Agent Teams 也更直接。打开 DevLead
-        不会让这些工作自动变得更好，反而多了一层需要说明和复核的调度。
+        如果事情只在一个仓库里、一轮就能做完，普通会话就够了。一次性的并行子任务，subagent
+        或者 Agent Teams 也更直接。打开 DevLead
+        不会让这些活自动变好，只会多一层需要解释和复核的调度。
       </p>
       <p>
-        它更适合另一种情形：工作横跨几个仓库，会持续多轮，需要在中途追问、失败后接续，并且我希望随时打开任何一个执行会话亲自接管。这里真正有价值的不是“多几个
-        Agent”，而是
-        <strong>把编排建立在本来就能被人看见、恢复和接管的 Session 上。</strong>
+        我打开它的场景比较固定：活横跨几个仓库，要跑好几轮，中间得追问，失败了要能接着来，而且我想随时打开任何一个执行会话自己看。这种时候有用的不是“多几个
+        agent”，而是
+        <strong>
+          编排本身的载体，是我本来就能看见、能恢复、能接管的东西。
+        </strong>
       </p>
     </>
   );
@@ -247,131 +249,138 @@ function DshDevleadEn() {
   return (
     <>
       <p>
-        When I ask DSH to work across several repositories, the modifications
-        are often not what consumes my attention. It is keeping track of where
-        the work went. Which agent is handling this change? Where do I continue
-        after a failure? If the worker is a temporary subagent, I usually wait
-        for its parent to return a summary. I cannot open that worker as an
-        independent conversation, ask it a follow-up, or simply take over.
+        When three repositories have to move at once, my old routine was three
+        sessions and a lot of switching. Watch the CI on one, answer a question
+        on the second, go back and see whether the third had finished what it
+        was doing. The switching was not the exhausting part. The exhausting
+        part was holding the state of all three in my head: which failure was
+        waiting on a decision, which README edit was still missing a verdict.
       </p>
       <p>
-        Subagents are a good fit for one-off parallel subtasks. Work that spans
-        repositories and sessions has another set of requirements: the execution
-        should remain visible, the state should survive, and both the model and
-        the human should be able to continue in the same place. I did not want
-        to invent a hidden control plane for that. <strong>dsh-devlead</strong>{" "}
-        lets one ordinary DSH Session act as the lead and dispatch work to other
-        ordinary Sessions that remain visible and open to human takeover.
+        Subagents helped for a while. They finish the job and hand back a
+        summary, but the worker itself is not something I can open. If I want to
+        know why it changed a particular file, I have to ask the parent to relay
+        the question, and the parent compresses the answer again. Two rounds
+        later, the thread is gone.
       </p>
       <p>
-        This is an introduction to its current design and capabilities, as of{" "}
-        <strong>v0.2.3</strong>. The point is not to make an agent do more
-        things at once. It is to keep multi-repository orchestration on a path
-        that a person can inspect and enter.
-      </p>
-
-      <h2>The missing piece is not parallelism</h2>
-      <p>
-        A model can start subagents inside a session, wait for their results,
-        and summarize the answer. That short path works well for bounded
-        subtasks. Once work spans repositories and turns, the limitations become
-        concrete. A subagent is usually not an ordinary Session that can be
-        opened from the sidebar. Its lifecycle belongs to the parent turn or
-        agent, and the human often sees only the final report rather than an
-        execution surface they can enter. State held only by an in-flight call
-        is also a poor basis for restart, recovery, and continuation.
-      </p>
-      <p>
-        dsh-devlead therefore does not add another layer around child agents. It
-        changes the work product to entities DSH already has. Workspaces are
-        genuinely registered through <code>ctx.workspaceRegistry</code>. Child
-        Sessions are real ordinary Sessions: they appear in the sidebar and can
-        be opened, continued, and archived. A person can step in with more
-        context, and the model can continue the same Session in a later turn.
-        They are not subagents under another name.
-      </p>
-      <p>
-        That choice also defines the lead's role:{" "}
-        <strong>dispatch by default rather than implement directly.</strong> The
-        lead decides which registered Workspace owns a request from its
-        metadata, then writes a self-contained brief with the background, target
-        result, open questions, deliverables, and verification. Read-only
-        inspection is bounded feasibility triage and review, not an excuse for
-        the lead to read every repository first. Writes, builds, and commits
-        belong to a Session in the owning Workspace, unless the human explicitly
-        authorizes direct work in the current lead conversation.
+        <strong>dsh-devlead</strong> came out of that annoyance. It does not
+        make child agents smarter. It changes what they are: the dispatching
+        happens in an ordinary Session, and the workers are ordinary Sessions
+        too. What follows describes v0.2.3 — why the lead dispatches instead of
+        implementing, how a finished turn wakes it up, and the parts that still
+        do not work well.
       </p>
 
-      <h2>An ordinary Session plus a human switch</h2>
+      <h2>Parallelism was never the problem</h2>
       <p>
-        DevLead is not a special kind of Session. It is an ordinary Session with
-        one durable switch. A person runs <code>/devlead on</code> in the
-        Session that should coordinate several repositories, or clicks the small
-        icon in the composer toolbar. Only then does that Session receive the{" "}
-        <code>devlead_*</code> tools, a DevLead system prompt, and a status
-        strip above the composer with watched and running counts and the latest
-        notification.
+        A subagent assumes a bounded job inside one turn. Most of the time that
+        assumption holds, which is why it is fast. But the job's lifecycle
+        belongs to the parent turn: when the parent finishes, the worker is
+        gone. It usually does not appear in the sidebar as a conversation you
+        can open, so you see the final report and not the work.
       </p>
       <p>
-        The switch is human-only. No model tool can enable it, and ordinary
-        Sessions do not see the tools. While the mode is off, the interface
-        keeps only the small icon rather than putting a permanent banner on
-        every conversation. The enabled state persists across restarts and
-        resumes; when it is no longer needed, a person turns it off with{" "}
+        Work that crosses repositories does not fit that shape. It runs for many
+        turns. It fails, waits for a decision, or turns around because an
+        interface upstream changed. At those moments I rarely want another
+        dispatch. I want to open the session, add a sentence of context, or take
+        over myself. The missing piece was not more parallelism. It was a door
+        into the parallelism I already had.
+      </p>
+      <p>
+        So the plugin changes the work product instead of wrapping it. A child
+        is a real Session: it is in the sidebar, and it can be opened,
+        continued, archived. A Workspace is registered through{" "}
+        <code>ctx.workspaceRegistry</code>, not kept in a private table inside
+        the plugin. I can walk in at any point, and the model can pick up the
+        same Session in a later turn.
+      </p>
+      <p>
+        That choice fixes the lead's job too:{" "}
+        <strong>dispatch by default.</strong> It reads the metadata of
+        registered Workspaces to decide who owns a request, then writes a brief
+        that carries its own context — background, target outcome, open
+        questions, deliverables, and how to verify the result — and hands it to
+        a Session in that repository. It may do read-only checks to judge
+        feasibility or confirm a claim, but it does not read every repository
+        first. Writes, builds, and commits happen in the owning Workspace unless
+        I explicitly tell the lead to do them here.
+      </p>
+
+      <h2>A switch only a human can flip</h2>
+      <p>
+        DevLead is not a different kind of Session. It is an ordinary Session
+        with one durable switch. I run <code>/devlead on</code> in the session
+        that should coordinate several repositories, or click the small icon in
+        the composer toolbar, and that session gains the <code>devlead_*</code>{" "}
+        tools, a DevLead system prompt, and a status strip above the input with
+        the watched count, the running count, and the latest notification.
+      </p>
+      <p>
+        I kept the switch out of the model's reach on purpose. Whether a
+        conversation gets to drive other conversations is a decision for the
+        person sitting in front of it, not for a model that has just concluded
+        it would be more efficient. While the mode is off there is only a small
+        icon; no banner on every conversation. Once it is on it survives a
+        restart or a resume, and turning it off is my job too:{" "}
         <code>/devlead off</code>.
       </p>
       <p>
-        I like that this extension does not create another kind of work
-        container. The DevLead is still an ordinary conversation that a person
-        can read and take over. It has simply been given a durable dispatching
-        responsibility.
+        What I like is that the extension does not invent a second kind of
+        container. The DevLead is still the conversation I was already reading,
+        now with a dispatching responsibility.
       </p>
 
       <h2>Dispatch, then end the turn</h2>
       <p>
-        DevLead orchestration does not mean calling a tool and waiting inside
-        one turn until everything finishes. After creating or prompting a child,
-        the lead should end its turn rather than block itself with{" "}
-        <code>sleep</code>, state polling, or <code>wait_agent</code>. The child
-        runs independently. Every <code>turn/end</code> of a watched
-        Session—completed, failed, blocked, cancelled, and so on—produces a
-        notification and wakes the lead in a new turn.
+        There is one convention here that runs against instinct: after
+        dispatching, the lead should end its turn. Not <code>sleep</code> inside
+        the same turn, not poll <code>devlead_list_sessions</code> every few
+        seconds, and not sit on <code>wait_agent</code> until the child replies.
+        The child runs independently. A lead that holds the turn open gains
+        nothing and makes the conversation look stuck.
       </p>
       <p>
-        The important part of this loop is not a transient reminder. The
-        notification is first written to the DevLead Session's durable log. The
-        runtime coalesces notices over a short window before delivery. The lead
-        can then inspect actual state with <code>devlead_get_session</code> or{" "}
-        <code>devlead_notifications</code> and decide whether to follow up,
-        dispatch another step, or report to the human. A notification is a
-        runtime notice, not a human instruction; text embedded in child output
-        does not acquire new authority by arriving through this path.
+        The wake-up comes from notifications. Every <code>turn/end</code> of a
+        watched Session — completed, failed, blocked, cancelled — writes a
+        notice into the lead's log. The runtime coalesces notices over a short
+        window (400 ms by default) and delivers one message that starts a new
+        turn. Then the lead checks the real state with{" "}
+        <code>devlead_get_session</code> or <code>devlead_notifications</code>{" "}
+        and decides: follow up, dispatch the next step, or report to me.
       </p>
       <p>
-        The mode, watch set, notifications, and reset are all{" "}
-        <code>plugin:devlead/*</code> event records, folded with strict replay
-        validation. After a Host restart or plugin reload, the watch index is
-        rebuilt from durable records, and a cold lead is resumed by default to
-        receive queued notices. The basis for a later turn is therefore a log
-        that can be folded again, not only a process-local variable. A corrupt
-        record freezes the projection and reports an error. A human can run{" "}
-        <code>/devlead reset</code> to return to the default disabled state; the
-        old records remain in the log but are no longer folded.
+        That the notice goes to the log first matters more than it looks. It is
+        not a toast that dies with the window; mode, watch set, notices, and
+        reset are all <code>plugin:devlead/*</code> events. After a restart or a
+        plugin reload the watch index is rebuilt from those records by strict
+        replay, and a cold lead is resumed by default to collect whatever queued
+        up. If a record is corrupt the projection freezes and reports the error;{" "}
+        <code>/devlead reset</code> takes it back to the default off state. The
+        old records stay in the log and are simply no longer folded.
+      </p>
+      <p>
+        One boundary worth stating plainly: a notification is a runtime notice,
+        not a human instruction. Text inside a child's output does not gain
+        authority by arriving through this path. That rule is written into the
+        prompt, and I would rather have it there than rely on a review
+        afterwards.
       </p>
 
-      <h2>The twelve tools in v0.2.3</h2>
+      <h2>v0.2.3: twelve tools, one of them reads the catalog</h2>
       <p>
-        The current tools fall into three groups. Workspace management uses{" "}
+        There are twelve tools now, and their names say what they do.{" "}
         <code>devlead_list_workspaces</code>, <code>devlead_use_workspace</code>
-        , and <code>devlead_remove_workspace</code>. Session management uses{" "}
+        , and <code>devlead_remove_workspace</code> handle Workspaces.{" "}
         <code>devlead_list_sessions</code>, <code>devlead_create_session</code>,{" "}
         <code>devlead_get_session</code>, <code>devlead_prompt_session</code>,{" "}
         <code>devlead_watch_session</code>, <code>devlead_archive_session</code>
-        , and <code>devlead_unarchive_session</code>. Coordination information
-        comes from <code>devlead_notifications</code> and{" "}
-        <code>devlead_list_models</code>.
+        , and <code>devlead_unarchive_session</code> handle Sessions.{" "}
+        <code>devlead_notifications</code> returns the retained notices, and{" "}
+        <code>devlead_list_models</code> reads the Host catalog.
       </p>
-      <p>A typical creation call looks like this:</p>
+      <p>A creation call looks roughly like this:</p>
       <pre>
         <code>{`{
   "workspace": "/Users/me/Workspace/src/api",
@@ -381,57 +390,63 @@ function DshDevleadEn() {
 }`}</code>
       </pre>
       <p>
-        The child cannot see the lead's conversation, so the prompt must be
-        self-contained. <code>watch</code> already defaults to <code>true</code>
-        ; it is explicit here to show the notification relationship. If a live
-        Session is already handling the request in the owning Workspace, the
-        lead should continue it rather than create a duplicate.
+        The child cannot see the lead's conversation, so the prompt has to stand
+        alone. <code>watch</code> already defaults to <code>true</code>;
+        spelling it out here is only to make the relationship visible. If the
+        owning Workspace already has a live Session on the same request,
+        continue that one instead of creating a twin.
       </p>
       <p>
-        Version 0.2.3 is a patch release, taking the model-facing surface from
-        11 to 12 tools. The new <code>devlead_list_models</code> returns a
-        compact Host model catalog. Session creation can now pin a paired{" "}
-        <code>provider</code> and <code>model</code>, with an optional{" "}
-        <code>reasoning_effort</code>. The default is still to inherit the
-        Host's model. A route should be pinned only when the human asks or the
-        brief needs cost or capability routing or reproducibility, and only
-        after consulting the catalog. The selection is recorded on that child
-        Session, applies only at creation, and never rewrites the profile
-        default.
+        Version 0.2.3 is a patch release. The tool surface went from 11 to 12,
+        and the new one, <code>devlead_list_models</code>, returns a trimmed
+        Host model catalog — display fields like descriptions are dropped to
+        keep it cheap. With that, creation can pin a paired{" "}
+        <code>provider</code> and <code>model</code>, plus an optional{" "}
+        <code>reasoning_effort</code>. The default is still to inherit the Host
+        model. Pinning is for the cases where someone asked for it, or where the
+        work genuinely needs cost or capability routing or has to be
+        reproducible; and if you are going to pin, look it up first rather than
+        guess.
       </p>
       <p>
-        <code>agent_teams</code> is also creation-time only. For complex,
-        multi-step, parallel work that benefits from subagents, the lead can use
-        its judgment and explicitly pass <code>true</code>. Simple linear work
-        usually omits it, and an explicit human on or off takes precedence.
-        Omitting the option leaves the Host default alone; it does not force the
-        feature off.
+        The selection is recorded on that child Session, applies at creation
+        only, and never rewrites the profile default. I care about that last
+        part. A dispatch quietly changing the global default model is the kind
+        of debt you find months later.
+      </p>
+      <p>
+        <code>agent_teams</code> is creation-time only as well. For work that is
+        complex, multi-step, parallel, and actually helped by subagents, the
+        lead can judge and pass <code>true</code>. Simple linear work usually
+        leaves it out, and an explicit instruction from me wins. Leaving it out
+        means leaving the Host default alone, which is not the same as forcing
+        it off; that distinction gets misread a lot.
       </p>
       <p>
         When the Host composes the experimental worktree service,{" "}
-        <code>isolation: "worktree"</code> can give a new Session its own branch
-        and checkout before its first prompt. This isolation is optional and
-        best-effort. If the capability is absent or creation fails, the Session
-        is still created and prompted in the shared checkout, and the result
-        reports <code>unavailable</code> or <code>failed</code>. The lead must
-        not pretend isolation succeeded; writes sharing that checkout should be
+        <code>isolation: "worktree"</code> gives a new Session its own branch
+        and checkout before the first prompt. It is optional and best-effort. If
+        the capability is missing or creation fails, the Session is still
+        created and prompted in the shared checkout, and the result says{" "}
+        <code>unavailable</code> or <code>failed</code>. Do not pretend the
+        isolation happened; writes that share that checkout have to be
         serialized.
       </p>
       <p>
-        Wrap-up uses judgment too, within conservative boundaries. The lead may
+        Wrap-up is also a judgment call, with conservative edges. The lead may
         archive finished temporary Sessions it created or dispatched, and remove
-        Workspace registrations that are clearly stale, duplicate, empty, or
-        self-created. It must not close something the human is using, hide a
-        failure through archiving, or start an unrelated broad cleanup. Archive
-        preserves the log and can be reversed; removing a Workspace only
-        unregisters it and does not delete the directory. Every autonomous close
-        must be reported with its rationale and impact.
+        Workspace registrations that are clearly stale, duplicate, empty, or its
+        own. It must not close something I am using, hide a failure behind an
+        archive, or start a broad cleanup nobody asked for. Archive keeps the
+        log and can be reversed; removing a Workspace only unregisters it and
+        does not delete the directory. Every self-directed close comes with a
+        reason and an impact statement.
       </p>
 
-      <h2>Installation and compatibility</h2>
+      <h2>Install, and the compatibility details</h2>
       <p>
-        Install the bundle into the desktop profile to bring in the core
-        service, tools, command, and interface:
+        Install the bundle into the desktop profile and you get the service, the
+        tools, the command, and the interface:
       </p>
       <pre>
         <code>{`dsh plugin --profile desktop add @yankeguo/dsh-devlead-bundle`}</code>
@@ -465,59 +480,61 @@ function DshDevleadEn() {
       </p>
       <p>
         The plugins declare <code>DSH &gt;=0.2.2-rc.1 &lt;0.3.0</code>, and the
-        release notes cover 0.2.2-rc.1, rc.2, and rc.3. The base tools, model
-        catalog, and model selection work across all three. Agent Teams is the
-        exception: rc.1 has no corresponding service, so explicitly passing{" "}
+        release notes cover 0.2.2-rc.1, rc.2, and rc.3. The base tools, the
+        model catalog, and model selection work on all three. Agent Teams is the
+        one exception: rc.1 has no such service, so{" "}
         <code>agent_teams: true</code> returns{" "}
-        <code>DEVLEAD_TEAM_UNAVAILABLE</code> without creating a Session. Omit
-        the option or pass <code>false</code> to continue with ordinary
-        dispatch. From rc.2, enabling it requires the Host to compose the
-        service. This is a clear capability error, not the automatic degradation
-        used for worktree isolation.
+        <code>DEVLEAD_TEAM_UNAVAILABLE</code> and no Session is created. Omit
+        it, or pass <code>false</code>, and dispatch proceeds as usual. From
+        rc.2 the Host has to compose the service. This is a capability error,
+        not the quiet degradation worktree isolation does.
       </p>
 
-      <h2>Limitations and trade-offs</h2>
+      <h2>What it still does not do</h2>
       <p>
-        Durable state does not mean no event can ever be missed. A turn that
-        settles while the plugin itself is unloaded is not replayed for watchers
-        on the next load. The projection retains the latest 64 notifications and
-        watches at most 64 Sessions by default. Resuming a cold lead for a
-        notification is the default, but this is not permanent background
-        scheduling: the plugin does not create schedules or long-running
-        autonomous goals, and it does not orchestrate across processes or DSH
-        instances.
+        Durable state is not the same as never missing an event. A turn that
+        ends while the plugin is unloaded is not replayed for watchers when it
+        loads again. The projection keeps the latest 64 notices and watches at
+        most 64 Sessions by default.
       </p>
       <p>
-        Worktrees are not a complete Git workflow either. A new checkout starts
-        at the source checkout's HEAD; uncommitted, staged, untracked, and
-        ignored files are not copied. An existing Session cannot be moved into a
-        worktree. Reviewing, merging, or cherry-picking the branch remains a
-        separate task; the plugin never merges automatically. Ordinary child
-        Sessions also appear in the sidebar and consume model quota normally.
+        Resuming a cold lead for a notice is the default, but this is not a
+        background scheduler. The plugin does not create schedules, does not
+        start a long-running autonomous goal, and does not orchestrate across
+        processes or DSH instances.
       </p>
       <p>
-        Finally, the DevLead switch is not a security sandbox. Child Sessions
-        retain DSH's existing sandbox and permission mode, and installing a
-        third-party plugin still means trusting its code inside the Host
-        process. Visibility improves the operating boundary; it does not replace
-        the permission boundary.
+        Worktree isolation is not a complete Git workflow either. A new checkout
+        starts at the source checkout's HEAD, and uncommitted, staged,
+        untracked, and ignored files are not copied. An existing Session cannot
+        be moved into a worktree. Reviewing, merging, or cherry-picking the
+        branch is still separate work; the plugin never merges on its own. And
+        an ordinary child Session appears in the sidebar and spends quota like
+        any other conversation. It is not a free shadow copy.
+      </p>
+      <p>
+        Finally, the switch is not a security sandbox. Child Sessions keep DSH's
+        existing sandbox and permission mode, and installing a third-party
+        plugin still means trusting its code inside the Host process. Visibility
+        makes the operating boundary clearer. It does not replace the permission
+        boundary.
       </p>
 
-      <h2>When is it worth switching on?</h2>
+      <h2>When I switch it on</h2>
       <p>
-        For one modification in one repository, an ordinary single Session is
-        enough. For one-off parallel subtasks, subagents or Agent Teams are more
-        direct. DevLead does not automatically improve those jobs; it adds a
-        dispatching layer that must be explained and reviewed.
+        For one change in one repository, an ordinary Session is enough. For
+        one-off parallel subtasks, subagents or Agent Teams are more direct.
+        DevLead does not make those cases better; it adds a layer that has to be
+        explained and reviewed.
       </p>
       <p>
-        It fits a different situation: work spans several repositories,
-        continues over multiple turns, needs follow-up and recovery after
-        failure, and I want to open any worker and take it over myself. The
-        useful thing is not “more agents.” It is{" "}
+        I switch it on for a narrower shape: work that spans a few repositories,
+        runs for several turns, needs follow-ups, has to survive a failure, and
+        where I want to open any worker and take over. The value there is not
+        "more agents." It is that{" "}
         <strong>
-          building orchestration on Sessions that were already visible,
-          recoverable, and open to human intervention.
+          the orchestration rides on Sessions I could already see, resume, and
+          take over.
         </strong>
       </p>
     </>
@@ -531,12 +548,12 @@ export const dshDevlead: Post = {
     zh: {
       title: "dsh-devlead：把多仓库调度放回普通会话",
       summary:
-        "dsh-devlead 让一个普通 DSH Session 在人类显式开启后承担多仓库调度：派生的是可见、可接管的普通 Session，turn 结束通过持久通知唤醒 lead。本文介绍它的 dispatch-first 角色、事件溯源、v0.2.3 的十二个工具，以及模型选择、Agent Teams、worktree 隔离和兼容边界。",
+        "dsh-devlead 是一个普通 DSH 会话加一条只属于人的开关：打开后它把活派给真实、可打开接管的子会话，自己默认不动手写代码。这篇写我为什么这么设计，通知怎么把 lead 叫醒，v0.2.3 多了什么，以及它现在仍然做不好的地方。",
     },
     en: {
       title: "dsh-devlead: Orchestration in Ordinary Sessions",
       summary:
-        "dsh-devlead lets an ordinary DSH Session coordinate several repositories after a human enables the mode. It dispatches to ordinary Sessions that stay visible and open to human takeover, and uses durable turn-end notifications to wake the lead. This introduction covers its dispatch-first role, event-sourced state, the twelve tools in v0.2.3, and the boundaries of model selection, Agent Teams, worktree isolation, and compatibility.",
+        "dsh-devlead is an ordinary DSH Session with a switch only a human can flip. Once it is on, the lead dispatches work to real Sessions you can open and take over, and does not implement anything itself. This is why it is built that way, how notifications wake the lead, what v0.2.3 added, and what still does not work.",
     },
   },
   Body: { zh: DshDevleadZh, en: DshDevleadEn },
