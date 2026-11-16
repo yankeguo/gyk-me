@@ -10,6 +10,7 @@
 
 import type { Locale } from "~/lib/i18n";
 
+import { dshDevlead } from "./dsh-devlead";
 import { htmlAsInterface } from "./html-as-interface";
 import { policyRehearsal } from "./policy-rehearsal";
 import { randomRoom } from "./random-room";
@@ -38,6 +39,7 @@ export type Post = {
 
 /** Newest first — the order the index renders them in. */
 export const posts: Post[] = [
+  dshDevlead,
   htmlAsInterface,
   policyRehearsal,
   randomRoom,
